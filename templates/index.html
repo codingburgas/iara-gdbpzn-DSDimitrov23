@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IARA Inspector Portal</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 50px; }
+        .card { background: white; padding: 30px; border-radius: 10px; shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; padding: 15px; display: none; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>IARA Verification</h2>
+        <input type="text" id="cfrInput" placeholder="Enter Vessel CFR (e.g. BGR001)">
+        <button onclick="checkVessel()">Check Permit</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function checkVessel() {
+            const cfr = document.getElementById('cfrInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // We call the API endpoint we created in app.py
+                const response = await fetch(`/api/check_permit/${cfr}`);
+                const data = await response.json();
+                
+                resultDiv.style.display = "block";
+                if (response.ok) {
+                    resultDiv.className = "success";
+                    resultDiv.innerHTML = `<strong>VALID</strong><br>Vessel: ${data.vessel}<br>Expires: ${data.expires}`;
+                } else {
+                    resultDiv.className = "error";
+                    resultDiv.innerHTML = `<strong>DENIED</strong><br>${data.error || data.status}`;
+                }
+            } catch (err) {
+                alert("Server is not responding!");
+            }
+        }
+    </script>
+</body>
+</html>
