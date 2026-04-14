@@ -33,15 +33,6 @@
             <div class="stat-card"><i class="fas fa-users"></i><h3 id="stat-tickets">0</h3><p>Tickets Sold</p></div>
         </div>
     </div>
-    <script>
-        async function loadStats() {
-            const res = await fetch('/api/stats');
-            const data = await res.json();
-            document.getElementById('stat-vessels').innerText = data.total_vessels;
-            document.getElementById('stat-permits').innerText = data.active_permits;
-            document.getElementById('stat-tickets').innerText = data.tickets_sold;
-        }
-        window.onload = loadStats;
-    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
