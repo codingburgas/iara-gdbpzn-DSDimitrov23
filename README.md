@@ -1,25 +1,52 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/RlRKNPRa)
-# 🌊 IARA Fisheries Management System
-> **Digital transformation solution for the Executive Agency for Fisheries and Aquaculture (Bulgaria).**
+# ⚓ Система за управление на риболовните дейности (ИАРА)
 
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
-[![Flask Framework](https://img.shields.io/badge/framework-Flask-lightgrey.svg)](https://flask.palletsprojects.com/)
-
-## 📌 Project Overview
-This system is designed to manage the core business processes of **IARA**, providing a centralized platform for vessel registration, fishing permits, and real-time inspections.
-
-### Key Modules:
-* **🚢 Vessel Registry:** Detailed technical parameters (CFR, tonnage, engine power).
-* **📜 Permit System:** Management of annual fishing licenses and authorized gear.
-* **👮 Inspection Tool:** Mobile-ready interface for on-site verification and law enforcement.
-* **🎫 Amateur Fishing:** Automated ticketing system with special categories (Seniors, Minors, Disabled/TELK).
+**Дигитална платформа за мониторинг и автоматизация на процесите в Изпълнителната агенция по рибарство и аквакултури.**
 
 ---
 
-## 🛠️ Tech Stack
-* **Backend:** Python 3 (Flask API)
-* **Frontend:** HTML5, CSS3, JavaScript (Fetch API)
-* **Middleware:** Flask-CORS (Cross-Origin Resource Sharing)
+## 📌 Общ преглед на проекта
+Този софтуерен продукт е разработен като модерно решение за дигитализация на ключови оперативни дейности на ИАРА. Системата предоставя централизирана платформа за управление на риболовния флот, издаване на разрешителни и контрол на терен.
+
+Целта на проекта е да се съкрати времето за проверка на плавателните съдове и да се автоматизира процесът по издаване на билети за любителски риболов.
 
 ---
 
+## 🧩 Основни функционални модули
+
+### 🚢 Регистър на риболовния флот
+* **Техническа база данни:** Пълна информация за плавателните съдове (CFR номер, име, бруто тонаж).
+* **Спецификации:** Проследяване на дължина и мощност на двигателите съгласно изискванията.
+
+### 📜 Система за разрешителни
+* **Лицензиране:** Проверка на валидността на разрешителни за стопански риболов в реално време.
+* **Риболовни уреди:** Мониторинг на разрешените уреди за всяко конкретно плавателно средство.
+
+### 👮 Инспекционен инструмент
+* **Мобилна оптимизация:** Интерфейс, проектиран за работа на таблети и телефони за инспектори на терен.
+* **Мигновена верификация:** Бърза проверка на легалния статус чрез API интеграция.
+
+### 🎫 Любителски риболов
+* **Автоматизиран калкулатор:** Вградена логика за изчисляване на такси спрямо категориите:
+    * *Стандартен билет* (над 14г.)
+    * *Намален билет* (пенсионери и непълнолетни)
+    * *Безплатен билет* (лица с ТЕЛК решение)
+
+---
+
+## 🛠️ Технологичен стек
+
+| Слой | Технология |
+| :--- | :--- |
+| **Backend** | Python 3 (Flask API) |
+| **Frontend** | HTML5, CSS3, JavaScript (ES6+) |
+| **API** | Fetch API / RESTful Services |
+| **Архитектура** | SPA (Single Page Application) |
+| **Middleware** | Flask-CORS |
+
+---
+
+## 🚀 Инсталация и стартиране
+
+1. Клонирайте репозиторито:
+   ```bash
+   git clone [https://github.com/vashiata-potrebitelska-snimka/iara-system.git](https://github.com/vashiata-potrebitelska-snimka/iara-system.git)
