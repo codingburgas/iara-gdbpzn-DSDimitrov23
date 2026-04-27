@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>ИАРА Система</title>
+    <style>
+        :root { --navy: #1a2a6c; --blue: #2980b9; --light: #f8f9fa; --accent: #f39c12; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--light); }
+        .sidebar { width: 250px; height: 100vh; background: var(--navy); color: white; position: fixed; }
+        .sidebar h2 { text-align: center; color: var(--accent); padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar a { display: block; color: white; padding: 15px 25px; text-decoration: none; transition: 0.3s; }
+        .sidebar a:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
+        .main-content { margin-left: 250px; padding: 30px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>⚓ ИАРА</h2>
+        <a href="/">📊 Табло за управление</a>
+        <a href="/vessels">🚢 Регистър на кораби</a>
+        <a href="/tickets">🎫 Риболовни билети</a>
+        <a href="/inspections">📋 Инспекции</a>
+    </div>
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

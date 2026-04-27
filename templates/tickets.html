@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>🎫 Издаване на риболовни билети</h1>
+    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <h3>Изчисли цена на билет</h3>
+        <select id="ticketType" style="padding: 10px; margin-bottom: 10px; width: 100%;">
+            <option value="standard">Стандартен (над 14г.) - 25 лв.</option>
+            <option value="junior">Под 14г. / Пенсионер - 10 лв.</option>
+            <option value="invalid">Инвалид (с ТЕЛК) - Безплатен</option>
+        </select>
+        <input type="text" id="telkNum" placeholder="Номер на ТЕЛК решение (ако е приложимо)" style="padding: 10px; width: 95%; display:none;">
+        <button onclick="calculate()" style="padding: 10px 20px; background: var(--blue); color: white; border: none; margin-top: 10px; cursor: pointer;">Издай билет</button>
+        <p id="priceResult" style="margin-top: 15px; font-weight: bold;"></p>
+    </div>
+
+    <script>
+        document.getElementById('ticketType').onchange = function() {
+            document.getElementById('telkNum').style.display = (this.value === 'invalid') ? 'block' : 'none';
+        }
+        function calculate() {
+            const type = document.getElementById('ticketType').value;
+            let msg = "";
+            if(type === 'standard') msg = "Дължима сума: 25.00 лв.";
+            else if(type === 'junior') msg = "Дължима сума: 10.00 лв.";
+            else msg = "Билетът е безплатен. Решението се проверява...";
+            document.getElementById('priceResult').innerText = "✅ " + msg;
+        }
+    </script>
+{% endblock %}

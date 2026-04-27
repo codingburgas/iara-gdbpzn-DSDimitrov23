@@ -5,74 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ИАРА - Контролен панел</title>
     <style>
-        :root { --navy: #1a2a6c; --blue: #2980b9; --light: #f8f9fa; --accent: #f39c12; }
+        :root { --navy: #1a2a6c; --blue: #2980b9; --white: #ffffff; --light: #f4f7f6; --accent: #f39c12; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--light); }
         
-        .sidebar { width: 250px; height: 100vh; background: var(--navy); color: white; position: fixed; padding-top: 20px; }
-        .sidebar h2 { text-align: center; color: var(--accent); margin-bottom: 30px; }
-        .sidebar a { display: block; color: white; padding: 15px 25px; text-decoration: none; border-left: 4px solid transparent; transition: 0.3s; }
-        .sidebar a:hover { background: rgba(255,255,255,0.1); border-left: 4px solid var(--accent); }
+        .sidebar { width: 250px; height: 100vh; background: var(--navy); color: white; position: fixed; z-index: 100; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: var(--accent); margin: 0; }
         
+        .sidebar-menu { padding-top: 10px; }
+        .sidebar-menu a { 
+            display: block; 
+            padding: 15px 20px; 
+            color: white; 
+            text-decoration: none; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-menu a:hover { 
+            background: rgba(255,255,255,0.1); 
+            color: var(--accent); 
+            border-left: 4px solid var(--accent);
+        }
+
         .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .stat-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .stats { display: flex; gap: 20px; margin-bottom: 30px; }
+        .stat-card { flex: 1; background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stat-card h3 { font-size: 24px; margin: 10px 0; color: var(--navy); }
         
-        .search-box { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .input-group { display: flex; gap: 10px; margin-top: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
-        button { padding: 12px 25px; background: var(--blue); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:hover { background: var(--navy); }
-        #res { margin-top: 20px; font-weight: bold; font-size: 1.1rem; }
+        input, select { padding: 12px; margin: 10px 0; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        button { padding: 12px 25px; background: var(--blue); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #1f6391; transform: translateY(-1px); }
+        
+        #res, #ticketMsg { padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>⚓ ИАРА</h2>
-        <a href="#">📊 Табло за управление</a>
-        <a href="#">🚢 Регистър на кораби</a>
-        <a href="#">🎫 Риболовни билети</a>
-        <a href="#">📋 Инспекции</a>
-        <a href="#">⚙️ Настройки</a>
+        <div class="sidebar-header"><h2>⚓ ИАРА</h2></div>
+        <div class="sidebar-menu">
+            <a onclick="showSection('dashboard')">📊 Табло за управление</a>
+            <a onclick="showSection('tickets')">🎫 Риболовни билети</a>
+            <a onclick="showSection('inspections')">📋 Инспекции</a>
+        </div>
     </div>
 
     <div class="main-content">
-        <h1>Контролен панел</h1>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-icon">🚢</span>
-                <h3 id="stat-vessels">0</h3>
-                <p>Регистрирани кораби</p>
+        <div id="dashboard-section">
+            <h1>Контролен панел</h1>
+            <div class="stats">
+                <div class="stat-card"><h3>1</h3><p>Регистрирани кораби</p></div>
+                <div class="stat-card"><h3>1</h3><p>Активни разрешителни</p></div>
+                <div class="stat-card"><h3>12</h3><p>Извършени проверки</p></div>
+                <div class="stat-card"><h3>45</h3><p>Продадени билети</p></div>
             </div>
-            <div class="stat-card">
-                <span class="stat-icon">✅</span>
-                <h3 id="stat-permits">0</h3>
-                <p>Активни разрешителни</p>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">🔍</span>
-                <h3 id="stat-inspections">0</h3>
-                <p>Извършени проверки</p>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">👥</span>
-                <h3 id="stat-tickets">0</h3>
-                <p>Продадени билети</p>
+            <div class="card">
+                <h3>Бърза проверка на кораб</h3>
+                <p>Въведете CFR номер за справка в реално време:</p>
+                <input type="text" id="cfrInput" placeholder="Напр. BGR001">
+                <button onclick="verify()">Провери сега</button>
+                <div id="res"></div>
             </div>
         </div>
 
-        <div class="search-box">
-            <h3>Бърза проверка на кораб</h3>
-            <div class="input-group">
-                <input type="text" id="cfrInput" placeholder="Въведете CFR номер (напр. BGR001)">
-                <button onclick="verify()">Провери сега</button>
+        <div id="tickets-section" style="display: none;">
+            <h1>Издаване на любителски билети</h1>
+            <div class="card">
+                <h3>Калкулатор за такси</h3>
+                <p>Изберете категория съгласно нормативната уредба:</p>
+                <select id="ticketType">
+                    <option value="25">Стандартен (над 14г.) - 25.00 лв.</option>
+                    <option value="10">Под 14г. / Пенсионер - 10.00 лв.</option>
+                    <option value="0">Инвалид (ТЕЛК решение) - 0.00 лв.</option>
+                </select>
+                <br>
+                <button onclick="issueTicket()">Генерирай билет</button>
+                <div id="ticketMsg"></div>
             </div>
-            <div id="res"></div>
+        </div>
+
+        <div id="inspections-section" style="display: none;">
+            <h1>Регистър на инспекциите</h1>
+            <div class="card">
+                <h3>Нова проверка на терен</h3>
+                <input type="text" placeholder="Локация (пристанище/обект)">
+                <input type="text" placeholder="Име на проверяващ инспектор">
+                <br>
+                <button onclick="alert('Данните са изпратени към централния регистър!')">Запиши инспекция</button>
+            </div>
         </div>
     </div>
 
+    <script>
+        function showSection(sectionId) {
+            // Скриваме всички секции
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('tickets-section').style.display = 'none';
+            document.getElementById('inspections-section').style.display = 'none';
+
+            // Показваме само избраната
+            const activeSection = document.getElementById(sectionId + '-section');
+            if (activeSection) {
+                activeSection.style.display = 'block';
+            }
+        }
+    </script>
+    
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

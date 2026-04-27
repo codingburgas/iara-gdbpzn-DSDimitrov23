@@ -1,24 +1,17 @@
-async function loadStats() {
-    try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-        
-        document.getElementById('stat-vessels').innerText = data.total_vessels;
-        document.getElementById('stat-permits').innerText = data.active_permits;
-        document.getElementById('stat-inspections').innerText = data.recent_inspections;
-        document.getElementById('stat-tickets').innerText = data.tickets_sold;
-    } catch (e) {
-        console.error("Грешка при зареждане на статистиката:", e);
-    }
+function showSection(sectionId) {
+    document.getElementById('dashboard-section').style.display = 'none';
+    document.getElementById('tickets-section').style.display = 'none';
+    document.getElementById('inspections-section').style.display = 'none';
+
+    document.getElementById(sectionId + '-section').style.display = 'block';
 }
 
 async function verify() {
-    const cfr = document.getElementById('cfrInput').value;
+    const cfr = document.getElementById('cfrInput').value.toUpperCase();
     const resDiv = document.getElementById('res');
     
     if (!cfr) {
-        resDiv.style.color = "orange";
-        resDiv.innerText = "Моля, въведете CFR номер";
+        resDiv.innerHTML = "⚠️ Моля, въведете номер";
         return;
     }
 
@@ -27,16 +20,28 @@ async function verify() {
         const data = await response.json();
         
         if (response.ok) {
-            resDiv.style.color = "green";
-            resDiv.innerHTML = `✅ ВАЛИДНО: ${data.vessel}<br>📅 Срок: ${data.expires}`;
+            resDiv.innerHTML = `<div style="color: green; padding: 10px; border: 1px solid green;">
+                ✅ Валиден лиценз! <br> Кораб: ${data.vessel} <br> Валиден до: ${data.expires}
+            </div>`;
         } else {
-            resDiv.style.color = "red";
-            resDiv.innerHTML = `❌ НЕВАЛИДНО: ${data.error || "Няма данни"}`;
+            resDiv.innerHTML = `<div style="color: red; padding: 10px; border: 1px solid red;">
+                ❌ Грешка: ${data.error || data.status}
+            </div>`;
         }
     } catch (e) {
-        resDiv.style.color = "red";
-        resDiv.innerText = "Грешка при връзка със сървъра";
+        resDiv.innerHTML = "❌ Сървърна грешка";
     }
 }
 
-window.onload = loadStats;
+function issueTicket() {
+    const price = document.getElementById('ticketType').value;
+    const msg = document.getElementById('ticketMsg');
+    
+    if (price === "0") {
+        msg.style.color = "blue";
+        msg.innerText = "✅ Билетът е безплатен (изисква се ТЕЛК решение).";
+    } else {
+        msg.style.color = "green";
+        msg.innerText = `✅ Успешно издаден билет. Дължима сума: ${price}.00 лв.`;
+    }
+}
