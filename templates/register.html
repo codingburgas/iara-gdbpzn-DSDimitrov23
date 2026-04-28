@@ -5,26 +5,37 @@
     <title>ИАРА - Регистрация</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a2a6c; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        h2 { color: #1a2a6c; margin-bottom: 25px; }
+        .auth-card { background: white; padding: 40px; border-radius: 12px; width: 350px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #219150; }
-        p { margin-top: 20px; font-size: 14px; color: #666; }
-        a { color: #2980b9; text-decoration: none; font-weight: bold; }
+        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="auth-card">
-        <h2>📝 Регистрация</h2>
-        <form action="/login">
-            <input type="text" placeholder="Име и Фамилия" required>
-            <input type="email" placeholder="Електронна поща" required>
-            <input type="text" placeholder="Потребителско име" required>
-            <input type="password" placeholder="Парола" required>
+        <h2>Регистрация</h2>
+        <form onsubmit="handleRegister(event)">
+            <input type="text" id="regUser" placeholder="Потребителско име" required>
+            <input type="email" id="regEmail" placeholder="Електронна поща" required>
+            <input type="password" id="regPass" placeholder="Парола" required>
             <button type="submit">Създай профил</button>
         </form>
-        <p>Вече имате профил? <a href="/login">Вход</a></p>
+        <p><a href="/login">Вход</a></p>
     </div>
+    <script>
+        async function handleRegister(e) {
+            e.preventDefault();
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: document.getElementById('regUser').value,
+                    email: document.getElementById('regEmail').value,
+                    password: document.getElementById('regPass').value
+                })
+            });
+            if (res.ok) { alert("Записано!"); window.location.href = '/login'; }
+            else { alert("Грешка!"); }
+        }
+    </script>
 </body>
 </html>

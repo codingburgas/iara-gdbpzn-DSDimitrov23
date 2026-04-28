@@ -13,12 +13,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+
 class Vessel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     cfr = db.Column(db.String(20), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     captain = db.Column(db.String(100))
-    tonnage = db.Column(db.Float)
     valid_until = db.Column(db.String(20), default="2026-12-31")
     active = db.Column(db.Boolean, default=True)
 
@@ -28,16 +33,17 @@ class FishingTicket(db.Model):
     price = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Catch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fish_type = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 with app.app_context():
     db.create_all()
     if not Vessel.query.filter_by(cfr="BGR001").first():
-        new_vessel = Vessel(
-            cfr="BGR001", 
-            name="Black Sea Hunter", 
-            captain="Ivan Ivanov",
-            tonnage=15.5
-        )
-        db.session.add(new_vessel)
+        vessel = Vessel(cfr="BGR001", name="Black Sea Hunter", captain="Ivan Ivanov")
+        db.session.add(vessel)
         db.session.commit()
 
 @app.route("/")
@@ -53,32 +59,49 @@ def login_page():
 def register_page():
     return render_template("register.html")
 
+@app.route("/map")
+def map_page():
+    return render_template("map.html")
+
+@app.route("/api/register", methods=["POST"])
+def register_user():
+    data = request.json
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({"error": "Exists"}), 400
+    user = User(username=data['username'], email=data['email'], password=data['password'])
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({"message": "OK"}), 201
+
+@app.route("/api/login", methods=["POST"])
+def login_user():
+    data = request.json
+    user = User.query.filter_by(username=data['username'], password=data['password']).first()
+    if user:
+        return jsonify({"message": "OK", "username": user.username}), 200
+    return jsonify({"error": "Invalid"}), 401
+
 @app.route("/api/check_permit/<string:cfr>")
 def check_permit(cfr):
-    vessel = Vessel.query.filter_by(cfr=cfr.upper()).first()
-    if not vessel:
-        return jsonify({"error": "Корабът не е намерен"}), 404
-    
-    return jsonify({
-        "status": "Valid", 
-        "vessel": vessel.name, 
-        "captain": vessel.captain,
-        "expires": vessel.valid_until
-    })
+    v = Vessel.query.filter_by(cfr=cfr.upper()).first()
+    if not v: return jsonify({"error": "Not found"}), 404
+    return jsonify({"vessel": v.name, "captain": v.captain, "expires": v.valid_until})
 
 @app.route("/api/issue_ticket", methods=["POST"])
 def issue_ticket():
     data = request.json
-    try:
-        new_ticket = FishingTicket(
-            ticket_type=data['type'],
-            price=float(data['price'])
-        )
-        db.session.add(new_ticket)
-        db.session.commit()
-        return jsonify({"message": "Успешно записан билет!"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    t = FishingTicket(ticket_type=data['type'], price=float(data['price']))
+    db.session.add(t)
+    db.session.commit()
+    return jsonify({"message": "OK"}), 201
+
+@app.route("/api/save_catch", methods=["POST"])
+def save_catch():
+    data = request.json
+    new_catch = Catch(fish_type=data['fish_type'], location=data['location'])
+    db.session.add(new_catch)
+    db.session.commit()
+    return jsonify({"message": "Saved"}), 201
 
 if __name__ == "__main__":
     app.run(debug=True)
