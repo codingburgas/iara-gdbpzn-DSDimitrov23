@@ -6,9 +6,9 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a2a6c; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        h2 { color: #1a2a6c; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        h2 { color: #1a2a6c; margin-bottom: 25px; margin-top: 0; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
         button:hover { background: #1f6391; }
         p { margin-top: 20px; font-size: 14px; color: #666; }
         a { color: #2980b9; text-decoration: none; font-weight: bold; }
@@ -17,11 +17,13 @@
 <body>
     <div class="auth-card">
         <h2>⚓ Вход в ИАРА</h2>
-        <form action="/dashboard"> <input type="text" placeholder="Потребителско име" required>
-            <input type="password" placeholder="Парола" required>
+        <form onsubmit="handleLogin(event)">
+            <input type="text" id="loginUser" placeholder="Потребителско име" required>
+            <input type="password" id="loginPass" placeholder="Парола" required>
             <button type="submit">Влез</button>
         </form>
         <p>Нямате профил? <a href="/register">Регистрация</a></p>
     </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

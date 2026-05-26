@@ -20,21 +20,20 @@
 <body>
     <div class="fishing-panel">
         <h3 id="loc-name">Изберете водоем</h3>
-        <p id="status">Кликнете върху маркер на картата.</p>
-        <button id="fishBtn" style="display:none;" onclick="startFishing()">Хвърли въдицата!</button>
-        <button class="back-btn" onclick="window.location.href='/dashboard'">Назад към таблото</button>
+        <p id="status">Кликнете върху маркер на картата</p>
+        <button id="fishBtn" onclick="startFishing()" style="display: none; background: #27ae60;">Започни риболов</button>
+        <button class="back-btn" onclick="window.location.href='/'">Назад към таблото</button>
     </div>
+
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
-        const map = L.map('map').setView([42.7339, 25.4858], 7);
+        const map = L.map('map').setView([42.7, 25.3], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         const spots = [
-            { name: "Река Дунав (Русе)", coords: [43.85, 25.95], fish: ["Сом", "Шаран", "Бяла риба"] },
-            { name: "Река Марица (Пловдив)", coords: [42.15, 24.75], fish: ["Кефал", "Мряна", "Сом"] },
             { name: "Язовир Искър", coords: [42.45, 23.55], fish: ["Пъстърва", "Костур", "Платика"] },
             { name: "Река Камчия", coords: [43.02, 27.88], fish: ["Шаран", "Каракуда"] }
         ];
@@ -67,7 +66,7 @@
                     alert("🎣 Рибата се откачи... Опитайте пак!");
                 }
                 btn.disabled = false;
-                btn.innerText = "Хвърли въдицата!";
+                btn.innerText = "Започни риболов";
             }, 1500);
         }
     </script>

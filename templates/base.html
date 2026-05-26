@@ -7,22 +7,26 @@
         :root { --navy: #1a2a6c; --blue: #2980b9; --light: #f8f9fa; --accent: #f39c12; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--light); }
         .sidebar { width: 250px; height: 100vh; background: var(--navy); color: white; position: fixed; }
-        .sidebar h2 { text-align: center; color: var(--accent); padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar h2 { text-align: center; color: var(--accent); padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin: 0; }
+        .sidebar p { text-align: center; font-size: 14px; margin: 15px 0; color: #bdc3c7; }
         .sidebar a { display: block; color: white; padding: 15px 25px; text-decoration: none; transition: 0.3s; }
         .sidebar a:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
         .main-content { margin-left: 250px; padding: 30px; width: 100%; }
+        .logout-btn { background: #c0392b; color: white; text-align: center; margin: 20px; padding: 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>⚓ ИАРА</h2>
+        <p id="userGreeting">Зареждане...</p>
         <a href="/">📊 Табло за управление</a>
-        <a href="/vessels">🚢 Регистър на кораби</a>
+        <a href="/map">🗺️ Карта на водоемите</a>
         <a href="/tickets">🎫 Риболовни билети</a>
-        <a href="/inspections">📋 Инспекции</a>
+        <div class="logout-btn" id="authBtn">Изход</div>
     </div>
     <div class="main-content">
         {% block content %}{% endblock %}
     </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

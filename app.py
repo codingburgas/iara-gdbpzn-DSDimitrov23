@@ -42,12 +42,11 @@ class Catch(db.Model):
 with app.app_context():
     db.create_all()
     if not Vessel.query.filter_by(cfr="BGR001").first():
-        vessel = Vessel(cfr="BGR001", name="Black Sea Hunter", captain="Ivan Ivanov")
-        db.session.add(vessel)
+        sample_vessel = Vessel(cfr="BGR001", name="Black Sea Hunter", captain="Ivan Ivanov", valid_until="2026-12-31")
+        db.session.add(sample_vessel)
         db.session.commit()
 
 @app.route("/")
-@app.route("/dashboard")
 def index():
     return render_template("index.html")
 
@@ -62,6 +61,10 @@ def register_page():
 @app.route("/map")
 def map_page():
     return render_template("map.html")
+
+@app.route("/tickets")
+def tickets_page():
+    return render_template("tickets.html")
 
 @app.route("/api/register", methods=["POST"])
 def register_user():
@@ -84,7 +87,8 @@ def login_user():
 @app.route("/api/check_permit/<string:cfr>")
 def check_permit(cfr):
     v = Vessel.query.filter_by(cfr=cfr.upper()).first()
-    if not v: return jsonify({"error": "Not found"}), 404
+    if not v: 
+        return jsonify({"error": "Not found"}), 404
     return jsonify({"vessel": v.name, "captain": v.captain, "expires": v.valid_until})
 
 @app.route("/api/issue_ticket", methods=["POST"])
@@ -98,10 +102,10 @@ def issue_ticket():
 @app.route("/api/save_catch", methods=["POST"])
 def save_catch():
     data = request.json
-    new_catch = Catch(fish_type=data['fish_type'], location=data['location'])
-    db.session.add(new_catch)
+    c = Catch(fish_type=data['fish_type'], location=data['location'])
+    db.session.add(c)
     db.session.commit()
-    return jsonify({"message": "Saved"}), 201
+    return jsonify({"message": "OK"}), 201
 
 if __name__ == "__main__":
     app.run(debug=True)
