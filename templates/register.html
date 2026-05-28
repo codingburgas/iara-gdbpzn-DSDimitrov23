@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <title>ИАРА - Регистрация</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a2a6c; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .auth-card { background: white; padding: 40px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        h2 { color: #1a2a6c; margin-bottom: 25px; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a2a6c; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; box-sizing: border-box; }
+        .auth-card { background: white; padding: 40px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin: auto; }
+        h2 { color: #1a2a6c; margin-bottom: 20px; margin-top: 0; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; }
         button:hover { background: #219653; }
         p { margin-top: 20px; font-size: 14px; color: #666; }
         a { color: #2980b9; text-decoration: none; font-weight: bold; }
@@ -16,14 +16,26 @@
 </head>
 <body>
     <div class="auth-card">
-        <h2>Регистрация</h2>
+        <h2>Регистрация в ИАРА</h2>
         <form onsubmit="handleRegister(event)">
-            <input type="text" id="regUser" placeholder="Потребителско име" required>
-            <input type="email" id="regEmail" placeholder="Електронна поща" required>
-            <input type="password" id="regPass" placeholder="Парола" required>
+            <input type="text" id="regUser" placeholder="Потребителско име (за вход) *" required>
+            <input type="email" id="regEmail" placeholder="Електронна поща *" required>
+            <input type="password" id="regPass" placeholder="Парола *" required>
+            <input type="text" id="regFullName" placeholder="Пълно име (Име и Фамилия)">
+            <input type="text" id="regPhone" placeholder="Телефонен номер">
+            
+            <select id="regRole">
+                <option value="Любител Рибар">Любител Рибар</option>
+                <option value="Инспектор на ИАРА">Инспектор на ИАРА</option>
+                <option value="Капитан на Кораб">Капитан на Кораб</option>
+            </select>
+
+            <input type="text" id="regVessel" placeholder="Регистрация на Кораб (ако има)">
+            <input type="text" id="regPermit" placeholder="Разрешително № (ако има)">
+            
             <button type="submit">Създай профил</button>
         </form>
-        <p><a href="/login">Вход</a></p>
+        <p>Вече имате профил? <a href="/login">Вход</a></p>
     </div>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

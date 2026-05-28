@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
@@ -18,6 +18,12 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    fullname = db.Column(db.String(100), default="—")
+    phone = db.Column(db.String(20), default="—")
+    role = db.Column(db.String(50), default="Любител Рибар")
+    vessel = db.Column(db.String(50), default="—")
+    permit = db.Column(db.String(50), default="—")
+    member_since = db.Column(db.String(30), default="Май 2026")
 
 class Vessel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,16 +68,21 @@ def register_page():
 def map_page():
     return render_template("map.html")
 
-@app.route("/tickets")
-def tickets_page():
-    return render_template("tickets.html")
-
 @app.route("/api/register", methods=["POST"])
 def register_user():
     data = request.json
     if User.query.filter_by(username=data['username']).first():
         return jsonify({"error": "Exists"}), 400
-    user = User(username=data['username'], email=data['email'], password=data['password'])
+    user = User(
+        username=data['username'],
+        email=data['email'],
+        password=data['password'],
+        fullname=data.get('fullname', '—') if data.get('fullname') else '—',
+        phone=data.get('phone', '—') if data.get('phone') else '—',
+        role=data.get('role', 'Любител Рибар'),
+        vessel=data.get('vessel', '—') if data.get('vessel') else '—',
+        permit=data.get('permit', '—') if data.get('permit') else '—'
+    )
     db.session.add(user)
     db.session.commit()
     return jsonify({"message": "OK"}), 201
@@ -83,6 +94,44 @@ def login_user():
     if user:
         return jsonify({"message": "OK", "username": user.username}), 200
     return jsonify({"error": "Invalid"}), 401
+
+@app.route("/api/user/<string:username>")
+def get_user_details(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify({
+        "username": user.username,
+        "email": user.email,
+        "fullname": user.fullname,
+        "phone": user.phone,
+        "role": user.role,
+        "vessel": user.vessel,
+        "permit": user.permit,
+        "member_since": user.member_since
+    })
+
+@app.route("/api/user/<string:username>/edit", methods=["POST"])
+def edit_user_profile(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "Not found"}), 404
+    data = request.json
+    user.fullname = data.get('fullname', user.fullname)
+    user.email = data.get('email', user.email)
+    user.phone = data.get('phone', user.phone)
+    db.session.commit()
+    return jsonify({"message": "OK"})
+
+@app.route("/api/user/<string:username>/password", methods=["POST"])
+def change_password(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "Not found"}), 404
+    data = request.json
+    user.password = data.get('password')
+    db.session.commit()
+    return jsonify({"message": "OK"})
 
 @app.route("/api/check_permit/<string:cfr>")
 def check_permit(cfr):

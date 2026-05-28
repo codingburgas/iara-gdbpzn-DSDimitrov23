@@ -13,7 +13,7 @@
             --accent: #f39c12; 
         }
 
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--light); color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: none; background: var(--light); color: #333; }
         
         .sidebar { width: 260px; height: 100vh; background: var(--navy); color: white; position: fixed; z-index: 100; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -48,7 +48,7 @@
         .stat-card h3 { font-size: 28px; margin: 10px 0; color: var(--navy); }
         .stat-card p { margin: 0; color: #7f8c8d; font-size: 12px; text-transform: uppercase; }
 
-        input, select { padding: 12px; margin: 10px 0; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 6px; }
+        input, select { padding: 12px; margin: 10px 0; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         button { padding: 12px 28px; background: var(--blue); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
         button:hover { background: #1f6391; transform: translateY(-1px); }
         
@@ -72,6 +72,7 @@
             <a onclick="window.location.href='/map'">🗺️ Карта и Риболов</a>
             <a onclick="showSection('tickets')">🎫 Риболовни билети</a>
             <a onclick="showSection('inspections')">📋 Инспекции</a>
+            <a onclick="showSection('profile')">👤 Моят профил</a>
         </div>
     </div>
 
@@ -115,6 +116,81 @@
                 <button onclick="alert('Докладът е записан!')">Изпрати данни</button>
             </div>
         </div>
+
+        <div id="profile-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1 style="margin: 0;">Моят Профил</h1>
+                <div>
+                    <button onclick="triggerEditProfile()" style="background: #2980b9; padding: 10px 20px; font-size: 14px; margin-right: 10px;">📝 Редактирай Профил</button>
+                    <button onclick="triggerChangePassword()" style="background: #7f8c8d; padding: 10px 20px; font-size: 14px;">🔑 Смени Парола</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; align-items: flex-start;">
+                <div class="card" style="flex: 1; text-align: center; max-width: 320px; padding: 40px 20px;">
+                    <div id="avatar-initials" style="width: 100px; height: 100px; background: #6f4e37; color: white; font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 20px;">
+                        ДД
+                    </div>
+                    <h2 id="prof-name" style="color: var(--navy); margin: 0 0 10px 0; font-size: 24px;">—</h2>
+                    <span id="prof-role" style="background: #f39c12; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 15px;">Любител</span>
+                    <p id="prof-date" style="color: #7f8c8d; font-size: 14px; margin: 0 0 15px 0;">Член от: —</p>
+                    <span style="background: #27ae60; color: white; padding: 4px 15px; border-radius: 4px; font-size: 12px; font-weight: bold;">Активен</span>
+                </div>
+
+                <div style="flex: 2; display: flex; flex-direction: column; gap: 25px; width: 100%;">
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
+                        <div style="background: var(--navy); color: white; padding: 15px 20px; font-weight: bold; font-size: 16px;">
+                            Данни за Профила
+                        </div>
+                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Име:</span>
+                                <span id="detail-name">—</span>
+                            </div>
+                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Имейл:</span>
+                                <span id="detail-email">—</span>
+                            </div>
+                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Телефон:</span>
+                                <span id="detail-phone">—</span>
+                            </div>
+                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Роля:</span>
+                                <span id="detail-role">—</span>
+                            </div>
+                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Регистрация на Кораб:</span>
+                                <span id="detail-vessel">—</span>
+                            </div>
+                            <div style="display: flex; padding-bottom: 5px;">
+                                <span style="font-weight: bold; width: 200px; color: #555;">Разрешително №:</span>
+                                <span id="detail-permit">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
+                        <div style="background: var(--navy); color: white; padding: 15px 20px; font-weight: bold; font-size: 16px;">
+                            Сигурност
+                        </div>
+                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                                <div>
+                                    <span style="font-weight: bold; display: block; color: #333; margin-bottom: 5px;">Парола:</span>
+                                    <span style="color: #7f8c8d; font-size: 14px;">Последно сменена: неизвестно (променяйте редовно)</span>
+                                </div>
+                                <button onclick="triggerChangePassword()" style="background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 20px; font-size: 14px; border-radius: 4px;">Смени</button>
+                            </div>
+                            <div>
+                                <span style="font-weight: bold; display: block; color: #333; margin-bottom: 5px;">Опити за вход:</span>
+                                <span style="color: #7f8c8d; font-size: 14px;">Няма скорошни неуспешни опити</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -122,6 +198,7 @@
             document.getElementById('dashboard-section').style.display = 'none';
             document.getElementById('tickets-section').style.display = 'none';
             document.getElementById('inspections-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'none';
             document.getElementById(sectionId + '-section').style.display = 'block';
         }
     </script>
