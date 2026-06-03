@@ -1,29 +1,147 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+
 {% block content %}
-    <h1>🎫 Издаване на риболовни билети</h1>
-    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <h3>Изчисли цена на билет</h3>
-        <select id="ticketType" style="padding: 10px; margin-bottom: 10px; width: 100%;">
-            <option value="standard">Стандартен (над 14г.) - 25 лв.</option>
-            <option value="junior">Под 14г. / Пенсионер - 10 лв.</option>
-            <option value="invalid">Инвалид (с ТЕЛК) - Безплатен</option>
-        </select>
-        <input type="text" id="telkNum" placeholder="Номер на ТЕЛК решение (ако е приложимо)" style="padding: 10px; width: 95%; display:none;">
-        <button onclick="calculate()" style="padding: 10px 20px; background: var(--blue); color: white; border: none; margin-top: 10px; cursor: pointer;">Издай билет</button>
-        <p id="priceResult" style="margin-top: 15px; font-weight: bold;"></p>
+    <div class="topbar">
+        <div class="title-group">
+            <p>Риболовни билети</p>
+            <h1>Издаване и история на билети</h1>
+        </div>
     </div>
 
-    <script>
-        document.getElementById('ticketType').onchange = function() {
-            document.getElementById('telkNum').style.display = (this.value === 'invalid') ? 'block' : 'none';
+    <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+            <small>Общо издадени билети</small>
+            <h2 id="totalTickets">0</h2>
+        </div>
+        <div class="stat-card">
+            <small>Общо приходи</small>
+            <h2 id="totalRevenue">0.00 лв.</h2>
+        </div>
+        <div class="stat-card">
+            <small>Безплатни билети</small>
+            <h2 id="freeTickets">0</h2>
+        </div>
+        <div class="stat-card">
+            <small>Последен билет</small>
+            <h2 id="lastTicket">—</h2>
+        </div>
+    </div>
+
+    <div class="grid-two">
+        <div class="chart-card">
+            <h3>Издаване на билет</h3>
+            <p style="color: var(--muted); margin-bottom: 16px;">Попълнете информацията, за да издадете билет и запишете историята веднага.</p>
+
+            <label for="ticketType">Вид билет</label>
+            <select id="ticketType">
+                <option value="25.00">Стандартен (над 14г.) - 25.00 лв.</option>
+                <option value="10.00">Под 14г. / Пенсионер - 10.00 лв.</option>
+                <option value="0.00">Инвалид (с ТЕЛК) - Безплатен</option>
+            </select>
+
+            <input type="text" id="telkNum" placeholder="Номер на ТЕЛК решение (ако е приложимо)" style="display:none; margin-top: 14px;" />
+            <button class="primary" style="margin-top: 16px;" onclick="submitTicket()">Издай билет</button>
+            <p id="ticketMsg" class="muted" style="margin-top: 18px; min-height: 24px;"></p>
+        </div>
+
+        <div class="transactions-card">
+            <h3>История на билетите</h3>
+            <div id="ticketSummary" style="display:grid; gap:8px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between;"><span>Общо билети</span><strong id="summaryCount">0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Общо приходи</span><strong id="summaryRevenue">0.00 лв.</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Платени билети</span><strong id="summaryPaid">0</strong></div>
+            </div>
+            <ul id="ticketHistory" style="list-style:none; padding:0; margin:0; display:grid; gap:12px;"></ul>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ticketType = document.getElementById('ticketType');
+        if (ticketType) {
+            ticketType.addEventListener('change', () => {
+                document.getElementById('telkNum').style.display = ticketType.value === '0.00' ? 'block' : 'none';
+            });
         }
-        function calculate() {
-            const type = document.getElementById('ticketType').value;
-            let msg = "";
-            if(type === 'standard') msg = "Дължима сума: 25.00 лв.";
-            else if(type === 'junior') msg = "Дължима сума: 10.00 лв.";
-            else msg = "Билетът е безплатен. Решението се проверява...";
-            document.getElementById('priceResult').innerText = "✅ " + msg;
+        loadTicketHistory();
+    });
+
+    async function submitTicket() {
+        const ticketType = document.getElementById('ticketType');
+        const telk = document.getElementById('telkNum');
+        const result = document.getElementById('ticketMsg');
+        const typeLabel = ticketType.options[ticketType.selectedIndex].text;
+        const price = parseFloat(ticketType.value);
+
+        if (ticketType.value === '0.00' && telk.value.trim().length === 0) {
+            result.innerText = '❗ Въведете номер на ТЕЛК решение за безплатен билет.';
+            return;
         }
-    </script>
+
+        const res = await fetch('/api/issue_ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: typeLabel, price: price })
+        });
+
+        if (res.ok) {
+            result.innerText = `✅ Билетът е издаден: ${typeLabel}`;
+            loadTicketHistory();
+        } else {
+            result.innerText = '❌ Възникна проблем при издаването на билета.';
+        }
+    }
+
+    async function loadTicketHistory() {
+        const list = document.getElementById('ticketHistory');
+        const totalTickets = document.getElementById('totalTickets');
+        const totalRevenue = document.getElementById('totalRevenue');
+        const freeTickets = document.getElementById('freeTickets');
+        const lastTicket = document.getElementById('lastTicket');
+        const summaryCount = document.getElementById('summaryCount');
+        const summaryRevenue = document.getElementById('summaryRevenue');
+        const summaryPaid = document.getElementById('summaryPaid');
+
+        if (!list) return;
+        list.innerHTML = '<li style="color: var(--muted);">Зареждане...</li>';
+        const res = await fetch('/api/tickets');
+        if (!res.ok) {
+            list.innerHTML = '<li style="color: #ff6b6b;">Неуспешно зареждане на историята.</li>';
+            return;
+        }
+        const tickets = await res.json();
+        const revenue = tickets.reduce((sum, ticket) => sum + parseFloat(ticket.price), 0);
+        const free = tickets.filter(ticket => parseFloat(ticket.price) === 0).length;
+        const paid = tickets.filter(ticket => parseFloat(ticket.price) > 0).length;
+        const last = tickets.length ? tickets[0].timestamp : '—';
+
+        totalTickets.innerText = tickets.length;
+        totalRevenue.innerText = `${revenue.toFixed(2)} лв.`;
+        freeTickets.innerText = free;
+        lastTicket.innerText = last;
+        summaryCount.innerText = tickets.length;
+        summaryRevenue.innerText = `${revenue.toFixed(2)} лв.`;
+        summaryPaid.innerText = paid;
+
+        if (!tickets.length) {
+            list.innerHTML = '<li style="color: var(--muted);">Няма издадени билети към момента.</li>';
+            return;
+        }
+
+        list.innerHTML = tickets.map(ticket => `
+            <li style="background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px; display:grid; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="font-size:1rem;">${ticket.ticket_type}</strong>
+                    <span style="font-weight:700;">${ticket.price.toFixed(2)} лв.</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; color: var(--muted); font-size:0.93rem;">
+                    <span>${ticket.timestamp}</span>
+                    <span>${ticket.price == 0 ? 'Безплатен' : 'Платен'}</span>
+                </div>
+            </li>
+        `).join('');
+    }
+</script>
 {% endblock %}

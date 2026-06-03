@@ -1,29 +1,34 @@
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <title>ИАРА - Вход</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a2a6c; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        h2 { color: #1a2a6c; margin-bottom: 25px; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 12px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        button:hover { background: #1f6391; }
-        p { margin-top: 20px; font-size: 14px; color: #666; }
-        a { color: #2980b9; text-decoration: none; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="auth-card">
-        <h2>⚓ Вход в ИАРА</h2>
-        <form onsubmit="handleLogin(event)">
-            <input type="text" id="loginUser" placeholder="Потребителско име" required>
-            <input type="password" id="loginPass" placeholder="Парола" required>
-            <button type="submit">Влез</button>
-        </form>
-        <p>Нямате профил? <a href="/register">Регистрация</a></p>
+{% extends "base.html" %}
+
+{% block body_class %}no-sidebar{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper no-sidebar">
+    <div class="auth-hero">
+        <div class="inner">
+            <h1>Добре дошли в ИАРА</h1>
+            <p class="lead">Достъп до контролния панел за управление, проверки и издаване на разрешителни. Влезте с вашия профил за да продължите с администрирането на вашите разрешителни.</p>
+        </div>
+        <div class="hero-decor"></div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+    <div class="auth-panel">
+        <div class="auth-card">
+            <div class="logo"><span>⚓</span> ИАРА</div>
+            <h2>Вход</h2>
+            <form onsubmit="handleLogin(event)">
+                <input type="text" id="loginUser" placeholder="Потребителско име" required>
+                <div style="position:relative; margin-top: 12px; margin-bottom: 12px;">
+                    <input type="password" id="loginPass" placeholder="Парола" required style="padding-right: 60px;">
+                    <div style="position:absolute; right:16px; top:50%; transform:translateY(-50%); cursor: pointer;" class="show-pass" onclick="togglePass('loginPass')">Покажи</div>
+                </div>
+                <button type="submit" class="primary">Влез</button>
+            </form>
+            <p class="muted">Нямате профил? <a href="/register">Създайте профил</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script>
+function togglePass(id){const el=document.getElementById(id); if(el.type==='password') el.type='text'; else el.type='password';}
+</script>

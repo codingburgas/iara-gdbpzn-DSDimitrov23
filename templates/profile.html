@@ -1,0 +1,41 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+    <div class="topbar">
+        <div class="title-group">
+            <p>Профил</p>
+            <h1>Вашата информация</h1>
+        </div>
+        <div class="topbar-actions">
+            <button onclick="triggerEditProfile()">Редактирай профил</button>
+            <button class="primary" onclick="triggerChangePassword()">Смени парола</button>
+        </div>
+    </div>
+
+    <div class="grid-two">
+        <div class="chart-card">
+            <div style="display:flex; gap:18px; align-items:center; margin-bottom:20px;">
+                <div id="avatar-initials" style="width:72px; height:72px; border-radius:18px; background: radial-gradient(circle, rgba(79,142,247,0.88), rgba(33,67,120,0.95)); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fff;">??</div>
+                <div>
+                    <h3 id="prof-name">—</h3>
+                    <p id="prof-role" style="margin:4px 0 0; color: var(--muted);">—</p>
+                </div>
+            </div>
+            <div class="card-list">
+                <div class="item"><span>Потребителско име</span><strong id="detail-username">—</strong></div>
+                <div class="item"><span>Имейл</span><strong id="detail-email">—</strong></div>
+                <div class="item"><span>Телефон</span><strong id="detail-phone">—</strong></div>
+                <div class="item"><span>Роля</span><strong id="detail-role">—</strong></div>
+                <div class="item"><span>Кораб</span><strong id="detail-vessel">—</strong></div>
+                <div class="item"><span>Разрешително</span><strong id="detail-permit">—</strong></div>
+                <div class="item"><span>Член от</span><strong id="prof-date">—</strong></div>
+            </div>
+        </div>
+        <div class="transactions-card">
+            <h3>Профилни действия</h3>
+            <p>Тук може да променяте личните си данни и парола, както и да следите регистрацията на вашия кораб.</p>
+            <button class="primary" onclick="triggerEditProfile()">Редактирай информация</button>
+            <button style="margin-top: 12px;" onclick="triggerChangePassword()">Смени парола</button>
+        </div>
+    </div>
+{% endblock %}

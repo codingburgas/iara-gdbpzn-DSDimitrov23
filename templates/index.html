@@ -1,207 +1,180 @@
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ИАРА - Контролен панел</title>
-    <style>
-        :root { 
-            --navy: #1a2a6c; 
-            --blue: #2980b9; 
-            --white: #ffffff; 
-            --light: #f4f7f6; 
-            --accent: #f39c12; 
-        }
+﻿{% extends "base.html" %}
 
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: none; background: var(--light); color: #333; }
-        
-        .sidebar { width: 260px; height: 100vh; background: var(--navy); color: white; position: fixed; z-index: 100; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-header h2 { color: var(--accent); margin: 0; font-size: 22px; letter-spacing: 1px; margin-bottom: 20px; }
-        
-        .auth-status { padding: 15px; text-align: center; background: rgba(0,0,0,0.2); border-radius: 8px; margin: 0 10px; }
-        #userGreeting { font-size: 13px; display: block; margin-bottom: 10px; color: #bdc3c7; }
-
-        .sidebar-menu { padding-top: 20px; }
-        .sidebar-menu a { 
-            display: block; 
-            padding: 15px 25px; 
-            color: #ecf0f1; 
-            text-decoration: none; 
-            cursor: pointer; 
-            transition: 0.3s;
-            border-left: 4px solid transparent;
-        }
-        .sidebar-menu a:hover { 
-            background: rgba(255,255,255,0.05); 
-            color: var(--accent); 
-            border-left: 4px solid var(--accent);
-        }
-
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
-        h1 { color: var(--navy); margin-bottom: 30px; font-weight: 300; }
-        
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        
-        .stats { display: flex; gap: 20px; margin-bottom: 40px; }
-        .stat-card { flex: 1; background: white; padding: 20px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--blue); }
-        .stat-card h3 { font-size: 28px; margin: 10px 0; color: var(--navy); }
-        .stat-card p { margin: 0; color: #7f8c8d; font-size: 12px; text-transform: uppercase; }
-
-        input, select { padding: 12px; margin: 10px 0; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { padding: 12px 28px; background: var(--blue); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        button:hover { background: #1f6391; transform: translateY(-1px); }
-        
-        #res, #ticketMsg { padding: 15px; border-radius: 6px; margin-top: 20px; display: none; }
-    </style>
-</head>
-<body>
-
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2>⚓ ИАРА</h2>
-            <div class="auth-status">
-                <span id="userGreeting">Здравейте, Гост</span>
-                <button id="authBtn" onclick="window.location.href='/login'" style="background: var(--accent); padding: 8px 15px; width: 100%; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer;">
-                    Вход / Регистрация
-                </button>
-            </div>
+{% block content %}
+    <div class="topbar">
+        <div class="title-group">
+            <p>Добре дошли обратно, инспектор</p>
+            <h1>Дашборд на ИАРА</h1>
         </div>
-        <div class="sidebar-menu">
-            <a onclick="showSection('dashboard')">📊 Табло за управление</a>
-            <a onclick="window.location.href='/map'">🗺️ Карта и Риболов</a>
-            <a onclick="showSection('tickets')">🎫 Риболовни билети</a>
-            <a onclick="showSection('inspections')">📋 Инспекции</a>
-            <a onclick="showSection('profile')">👤 Моят профил</a>
+        <div class="topbar-actions">
+            <button class="primary" onclick="showSection('dashboard')">Табло</button>
+            <button onclick="showSection('tickets')">Билети</button>
+            <button onclick="showSection('profile')">Профил</button>
         </div>
     </div>
 
-    <div class="main-content">
-        <div id="dashboard-section">
-            <h1>Контролен панел</h1>
-            <div class="stats">
-                <div class="stat-card"><h3>1,240</h3><p>Кораби</p></div>
-                <div class="stat-card"><h3>892</h3><p>Активни Лицензи</p></div>
-                <div class="stat-card"><h3>156</h3><p>Проверки (М)</p></div>
-                <div class="stat-card"><h3>4,210</h3><p>Билети</p></div>
+    <div id="dashboard-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <small>Общо кораби</small>
+                <h2>1 240</h2>
+                <div class="delta">+4.2% спрямо предходния месец</div>
             </div>
-            <div class="card">
-                <h3>🔍 Проверка на плавателен съд</h3>
-                <input type="text" id="cfrInput" placeholder="Въведете CFR (напр. BGR001)">
-                <button onclick="verify()">Провери базата</button>
-                <div id="res"></div>
+            <div class="stat-card">
+                <small>Активни лицензи</small>
+                <h2>892</h2>
+                <div class="delta">+2.8% спрямо предходния месец</div>
             </div>
-        </div>
-
-        <div id="tickets-section" style="display: none;">
-            <h1>Издаване на билети</h1>
-            <div class="card">
-                <h3>🎫 Нов любителски билет</h3>
-                <select id="ticketType">
-                    <option value="25.00">Годишен стандартен - 25.00 €</option>
-                    <option value="10.00">Намален (Деца/Пенсионери) - 10.00 €</option>
-                    <option value="0.00">Безплатен (ТЕЛК) - 0.00 €</option>
-                </select>
-                <button onclick="issueTicket()">Запиши и издай</button>
-                <div id="ticketMsg"></div>
+            <div class="stat-card">
+                <small>Проверки</small>
+                <h2>156</h2>
+                <div class="delta">+11% спрямо предходния месец</div>
+            </div>
+            <div class="stat-card">
+                <small>Издадени билети</small>
+                <h2>4 210</h2>
+                <div class="delta">+6.4% спрямо предходния месец</div>
             </div>
         </div>
 
-        <div id="inspections-section" style="display: none;">
-            <h1>Инспекции</h1>
-            <div class="card">
-                <h3>📋 Нов инспекционен доклад</h3>
-                <input type="text" placeholder="Локация">
-                <input type="text" placeholder="Инспектор">
-                <button onclick="alert('Докладът е записан!')">Изпрати данни</button>
+        <div class="grid-two">
+            <div class="chart-card">
+                <h3>Месечен преглед</h3>
+                <div class="chart-placeholder">
+                    <div class="chart-line">
+                        <div class="col"><div class="line" style="--value:20"></div></div>
+                        <div class="col"><div class="line" style="--value:40"></div></div>
+                        <div class="col"><div class="line" style="--value:60"></div></div>
+                        <div class="col"><div class="line" style="--value:45"></div></div>
+                        <div class="col"><div class="line" style="--value:70"></div></div>
+                        <div class="col"><div class="line" style="--value:55"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="transactions-card">
+                <h3>Последни операции</h3>
+                <ul>
+                    <li>
+                        <div class="transaction-info">
+                            <strong>Проверка на кораб BGR001</strong>
+                            <span>19:32, 02 Юни</span>
+                        </div>
+                        <div class="amount positive">OK</div>
+                    </li>
+                    <li>
+                        <div class="transaction-info">
+                            <strong>Издаване на билет</strong>
+                            <span>08:15, 01 Юни</span>
+                        </div>
+                        <div class="amount positive">+ €25</div>
+                    </li>
+                    <li>
+                        <div class="transaction-info">
+                            <strong>Доклад за инспекция</strong>
+                            <span>14:42, 31 Май</span>
+                        </div>
+                        <div class="amount negative">Пропуск</div>
+                    </li>
+                    <li>
+                        <div class="transaction-info">
+                            <strong>Регистрация на нов съд</strong>
+                            <span>12:20, 28 Май</span>
+                        </div>
+                        <div class="amount positive">OK</div>
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <div id="profile-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h1 style="margin: 0;">Моят Профил</h1>
-                <div>
-                    <button onclick="triggerEditProfile()" style="background: #2980b9; padding: 10px 20px; font-size: 14px; margin-right: 10px;">📝 Редактирай Профил</button>
-                    <button onclick="triggerChangePassword()" style="background: #7f8c8d; padding: 10px 20px; font-size: 14px;">🔑 Смени Парола</button>
+        <div class="bottom-grid">
+            <div class="breakdown-card">
+                <h3>Разпределение на дейностите</h3>
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-dot"></span><span>Проверки</span></div>
+                    <div class="legend-item"><span class="legend-dot"></span><span>Разрешителни</span></div>
+                    <div class="legend-item"><span class="legend-dot"></span><span>Транспорт</span></div>
+                    <div class="legend-item"><span class="legend-dot"></span><span>Администрация</span></div>
                 </div>
             </div>
-
-            <div style="display: flex; gap: 30px; align-items: flex-start;">
-                <div class="card" style="flex: 1; text-align: center; max-width: 320px; padding: 40px 20px;">
-                    <div id="avatar-initials" style="width: 100px; height: 100px; background: #6f4e37; color: white; font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 20px;">
-                        ДД
-                    </div>
-                    <h2 id="prof-name" style="color: var(--navy); margin: 0 0 10px 0; font-size: 24px;">—</h2>
-                    <span id="prof-role" style="background: #f39c12; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 15px;">Любител</span>
-                    <p id="prof-date" style="color: #7f8c8d; font-size: 14px; margin: 0 0 15px 0;">Член от: —</p>
-                    <span style="background: #27ae60; color: white; padding: 4px 15px; border-radius: 4px; font-size: 12px; font-weight: bold;">Активен</span>
-                </div>
-
-                <div style="flex: 2; display: flex; flex-direction: column; gap: 25px; width: 100%;">
-                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
-                        <div style="background: var(--navy); color: white; padding: 15px 20px; font-weight: bold; font-size: 16px;">
-                            Данни за Профила
-                        </div>
-                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Име:</span>
-                                <span id="detail-name">—</span>
-                            </div>
-                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Имейл:</span>
-                                <span id="detail-email">—</span>
-                            </div>
-                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Телефон:</span>
-                                <span id="detail-phone">—</span>
-                            </div>
-                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Роля:</span>
-                                <span id="detail-role">—</span>
-                            </div>
-                            <div style="display: flex; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Регистрация на Кораб:</span>
-                                <span id="detail-vessel">—</span>
-                            </div>
-                            <div style="display: flex; padding-bottom: 5px;">
-                                <span style="font-weight: bold; width: 200px; color: #555;">Разрешително №:</span>
-                                <span id="detail-permit">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
-                        <div style="background: var(--navy); color: white; padding: 15px 20px; font-weight: bold; font-size: 16px;">
-                            Сигурност
-                        </div>
-                        <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                                <div>
-                                    <span style="font-weight: bold; display: block; color: #333; margin-bottom: 5px;">Парола:</span>
-                                    <span style="color: #7f8c8d; font-size: 14px;">Последно сменена: неизвестно (променяйте редовно)</span>
-                                </div>
-                                <button onclick="triggerChangePassword()" style="background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 20px; font-size: 14px; border-radius: 4px;">Смени</button>
-                            </div>
-                            <div>
-                                <span style="font-weight: bold; display: block; color: #333; margin-bottom: 5px;">Опити за вход:</span>
-                                <span style="color: #7f8c8d; font-size: 14px;">Няма скорошни неуспешни опити</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="goals-card">
+                <h3>Цели за месеца</h3>
+                <p>Брой проверки</p>
+                <div class="goal-line"><div class="goal-fill" style="width: 70%"></div></div>
+                <p>12 / 18</p>
+                <p>Издадени разрешителни</p>
+                <div class="goal-line"><div class="goal-fill" style="width: 55%"></div></div>
+                <p>55 / 100</p>
             </div>
         </div>
     </div>
 
-    <script>
-        function showSection(sectionId) {
-            document.getElementById('dashboard-section').style.display = 'none';
-            document.getElementById('tickets-section').style.display = 'none';
-            document.getElementById('inspections-section').style.display = 'none';
-            document.getElementById('profile-section').style.display = 'none';
-            document.getElementById(sectionId + '-section').style.display = 'block';
-        }
-    </script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
+    <div id="tickets-section" style="display: none;">
+        <div class="topbar">
+            <div class="title-group">
+                <p>Риболовни билети</p>
+                <h1>Издаване на нов билет</h1>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h3>Добавяне на билет</h3>
+            <select id="ticketType">
+                <option value="25.00">Годишен стандартен - 25.00 €</option>
+                <option value="10.00">Намален (Деца/Пенсионери) - 10.00 €</option>
+                <option value="0.00">Безплатен (ТЕЛК) - 0.00 €</option>
+            </select>
+            <button class="primary" onclick="issueTicket()">Издаване на билет</button>
+            <div id="ticketMsg"></div>
+        </div>
+    </div>
+
+    <div id="inspections-section" style="display: none;">
+        <div class="topbar">
+            <div class="title-group">
+                <p>Инспекции</p>
+                <h1>Нов инспекционен доклад</h1>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h3>Запис на инспекция</h3>
+            <input type="text" placeholder="Локация">
+            <input type="text" placeholder="Инспектор">
+            <button class="primary" onclick="alert('Докладът е записан!')">Изпрати</button>
+        </div>
+    </div>
+
+    <div id="profile-section" style="display: none;">
+        <div class="topbar">
+            <div class="title-group">
+                <p>Профил</p>
+                <h1>Вашата информация</h1>
+            </div>
+        </div>
+        <div class="grid-two">
+            <div class="chart-card">
+                <h3>Лични данни</h3>
+                <div class="card-list">
+                    <div class="item"><span>Име</span><strong id="detail-name">—</strong></div>
+                    <div class="item"><span>Имейл</span><strong id="detail-email">—</strong></div>
+                    <div class="item"><span>Телефон</span><strong id="detail-phone">—</strong></div>
+                    <div class="item"><span>Роля</span><strong id="detail-role">—</strong></div>
+                </div>
+            </div>
+            <div class="transactions-card">
+                <h3>Профилни действия</h3>
+                <button class="primary" onclick="triggerEditProfile()">Редактирай профил</button>
+                <button onclick="triggerChangePassword()">Смени парола</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+<script>
+    function showSection(sectionId) {
+        document.getElementById('dashboard-section').style.display = 'none';
+        document.getElementById('tickets-section').style.display = 'none';
+        document.getElementById('inspections-section').style.display = 'none';
+        document.getElementById('profile-section').style.display = 'none';
+        document.getElementById(sectionId + '-section').style.display = 'block';
+    }
+</script>

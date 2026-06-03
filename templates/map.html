@@ -1,74 +1,333 @@
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <title>ИАРА - Карта и Риболов</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        .fishing-panel {
-            position: absolute; top: 20px; right: 20px; z-index: 1000;
-            background: white; padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 260px;
+﻿{% extends "base.html" %}
+
+{% block body_class %}no-sidebar{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .no-sidebar .main-content {
+        margin-left: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        padding: 24px 20px !important;
+    }
+    .map-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.9fr) 360px;
+        gap: 28px;
+        min-height: calc(100vh - 92px);
+        width: min(100%, 1500px);
+        margin: 0 auto;
+    }
+    .map-panel {
+        background: rgba(28, 30, 38, 0.95);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 32px;
+        padding: 26px 26px 28px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.30);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-height: calc(100vh - 112px);
+        max-width: 360px;
+        position: sticky;
+        top: 24px;
+        align-self: start;
+    }
+    .map-panel .panel-head {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        margin-bottom: 14px;
+    }
+    .map-panel .panel-head small {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.76rem;
+    }
+    .map-panel .panel-head h2 {
+        margin: 0;
+        font-size: 1.45rem;
+        line-height: 1.18;
+    }
+    .map-panel .panel-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+    }
+    .map-panel p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+    }
+    .map-info-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .map-info-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px;
+        padding: 14px 16px;
+    }
+    .map-info-card strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #fff;
+        font-size: 0.95rem;
+    }
+    .map-info-card span {
+        color: var(--muted);
+        font-size: 0.92rem;
+    }
+    .spot-details {
+        display: grid;
+        gap: 12px;
+        margin-top: 10px;
+    }
+    .spot-badge {
+        display: inline-flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+    }
+    .spot-chip {
+        background: rgba(79,142,247,0.16);
+        color: #dbeafe;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .spot-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+    }
+    .spot-item {
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .spot-item:hover {
+        transform: translateY(-1px);
+        background: rgba(79,142,247,0.12);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.14);
+    }
+    .spot-item.active {
+        background: rgba(79,142,247,0.18);
+        border-color: rgba(79,142,247,0.32);
+    }
+    .spot-item strong {
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    .spot-item .spot-type {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 0.88rem;
+    }
+    .spot-item small {
+        display: block;
+        color: rgba(255,255,255,0.68);
+        margin-top: 8px;
+        font-size: 0.88rem;
+    }
+    #map {
+        width: 100%;
+        min-height: calc(100vh - 120px);
+        height: auto;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.32);
+    }
+    .fishing-actions button {
+        width: 100%;
+        margin-top: 10px;
+    }
+    @media (max-width: 1024px) {
+        .map-shell {
+            grid-template-columns: 1fr;
         }
-        button { width: 100%; padding: 12px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        button:hover { background: #1f6391; }
-        .back-btn { background: #7f8c8d; }
-    </style>
-</head>
-<body>
-    <div class="fishing-panel">
-        <h3 id="loc-name">Изберете водоем</h3>
-        <p id="status">Кликнете върху маркер на картата</p>
-        <button id="fishBtn" onclick="startFishing()" style="display: none; background: #27ae60;">Започни риболов</button>
-        <button class="back-btn" onclick="window.location.href='/'">Назад към таблото</button>
+        .map-panel {
+            position: relative;
+            top: 0;
+            min-height: auto;
+            max-width: 100%;
+        }
+        #map {
+            min-height: 56vh;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="topbar">
+        <div class="title-group">
+            <p>Карта на водоемите</p>
+            <h1>Избери водоем и провери риболова</h1>
+        </div>
     </div>
+    <div class="map-shell">
+        <section class="map-panel">
+            <div class="panel-head">
+                <small>Риболовни билети</small>
+                <h2>Изберете водоем</h2>
+                <p>Кликнете върху маркер или изберете съдържание от списъка.</p>
+            </div>
+            <div class="map-info-row">
+                <div class="map-info-card">
+                    <strong>Общо места</strong>
+                    <span id="spotCount">— места</span>
+                </div>
+                <div class="map-info-card">
+                    <strong>Статус</strong>
+                    <span id="spotHint">Изберете първо</span>
+                </div>
+            </div>
+            <h2 id="loc-name">Изберете водоем от картата</h2>
+            <p id="loc-region">Кликнете върху маркер, за да видите риби и условия.</p>
+            <div class="spot-details">
+                <div><strong>Тип:</strong> <span id="loc-type">—</span></div>
+                <div><strong>Най-често риби:</strong> <span id="loc-fish">—</span></div>
+                <div><strong>Условия:</strong> <span id="loc-info">—</span></div>
+            </div>
+            <div class="spot-badge" id="loc-badges"></div>
+            <div><strong>Водоеми и реки</strong></div>
+            <ul class="spot-list" id="spotList"></ul>
+            <div class="fishing-actions">
+                <button class="primary" id="fishBtn" onclick="startFishing()" style="display:none;">Започни риболов</button>
+                <button onclick="window.location.href='/dashboard'">Назад към таблото</button>
+            </div>
+        </section>
+        <div id="map"></div>
+    </div>
+{% endblock %}
 
-    <div id="map"></div>
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const waterSpots = [
+        { name: 'Язовир Искър', coords: [42.450, 23.550], type: 'Язовир', region: 'София', fish: ['Пъстърва', 'Костур', 'Платика'], info: 'Силно зарибен язовир с туристическа зона и обширни рибарски места.' },
+        { name: 'Река Камчия', coords: [43.020, 27.880], type: 'Река', region: 'Варна', fish: ['Шаран', 'Каракуда', 'Бяла риба'], info: 'Течаща река с различни дълбочини и много добри места за шаранова атака.' },
+        { name: 'Река Струма', coords: [42.000, 23.150], type: 'Река', region: 'Югозапад', fish: ['Пъстърва', 'Кефал', 'Черен мряна'], info: 'Хладна планинска река, подходяща за мухарски риболов.' },
+        { name: 'Язовир Копринка', coords: [42.450, 25.100], type: 'Язовир', region: 'Стара Загора', fish: ['Шаран', 'Щука', 'Бял амур'], info: 'Голям водоем с бавна вода и множество риболовни лагери.' },
+        { name: 'Река Марица', coords: [42.000, 26.850], type: 'Река', region: 'Югоизток', fish: ['Сом', 'Шаран', 'Каракуда'], info: 'Широка река с много подводни канали и спокойни брегове.' },
+        { name: 'Езерото Огоста', coords: [43.237, 23.189], type: 'Езеро', region: 'Монтана', fish: ['Костур', 'Шаран', 'Платика'], info: 'Малко езеро с лесен достъп и отлични условия за семейни риболовци.' },
+        { name: 'Язовир Янтра', coords: [43.170, 25.580], type: 'Язовир', region: 'Велико Търново', fish: ['Костур', 'Шаран', 'Амур'], info: 'Популярен язовир за риболов на щука и шаран.' },
+        { name: 'Река Дунав', coords: [44.000, 27.500], type: 'Река', region: 'Северна България', fish: ['Сом', 'Шаран', 'Кефал'], info: 'Мощна река с възможности за голям улов и конкурентни фишове.' },
+        { name: 'Язовир Широка поляна', coords: [41.940, 24.310], type: 'Язовир', region: 'Пловдив', fish: ['Щука', 'Шаран', 'Платика'], info: 'Красив язовир в Родопите с добро сцепление и отлични брегове.' },
+        { name: 'Река Арда', coords: [41.591, 25.574], type: 'Река', region: 'Югоизток', fish: ['Пъстърва', 'Каракуда', 'Шаран'], info: 'Планинска река с бързо течение и чудесни места за мухарски риболов.' },
+        { name: 'Езерото Пясъчник', coords: [43.838, 25.271], type: 'Езеро', region: 'Стара Загора', fish: ['Костур', 'Пъстърва', 'Бяла риба'], info: 'Спокойно езеро с добър достъп и чиста вода.' },
+        { name: 'Река Въча', coords: [41.900, 24.170], type: 'Река', region: 'Родопи', fish: ['Пъстърва', 'Кефал', 'Черен мряна'], info: 'Кристално река с перфектни условия за мухарски риболов.' },
+        { name: 'Река Лом', coords: [43.757, 23.211], type: 'Река', region: 'Северозапад', fish: ['Шаран', 'Каракуда', 'Костур'], info: 'Спокойна река с лесен достъп и много риболовни брегове.' }
+    ];
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    <script>
+    let selectedSpot = null;
+    let currentMarker = null;
+
+    function highlightSpot(name) {
+        const items = document.querySelectorAll('.spot-item');
+        items.forEach(item => {
+            item.classList.toggle('active', item.dataset.name === name);
+        });
+    }
+
+    function setSpot(spot) {
+        selectedSpot = spot;
+        document.getElementById('loc-name').innerText = spot.name;
+        document.getElementById('loc-region').innerText = `${spot.type} • ${spot.region}`;
+        document.getElementById('loc-type').innerText = spot.type;
+        document.getElementById('loc-fish').innerText = spot.fish.join(', ');
+        document.getElementById('loc-info').innerText = spot.info;
+        const badges = document.getElementById('loc-badges');
+        badges.innerHTML = '';
+        spot.fish.forEach(f => {
+            const chip = document.createElement('span');
+            chip.className = 'spot-chip';
+            chip.textContent = f;
+            badges.appendChild(chip);
+        });
+        document.getElementById('fishBtn').style.display = 'block';
+        document.getElementById('spotHint').innerText = `Избрано: ${spot.name}`;
+        highlightSpot(spot.name);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
         const map = L.map('map').setView([42.7, 25.3], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        const spots = [
-            { name: "Язовир Искър", coords: [42.45, 23.55], fish: ["Пъстърва", "Костур", "Платика"] },
-            { name: "Река Камчия", coords: [43.02, 27.88], fish: ["Шаран", "Каракуда"] }
-        ];
+        const spotList = document.getElementById('spotList');
+        spotList.innerHTML = waterSpots.map(spot => `
+            <li class="spot-item" data-name="${spot.name}">
+                <strong>${spot.name}</strong>
+                <div class="spot-type">${spot.type} • ${spot.region}</div>
+                <small>Обикновено: ${spot.fish.slice(0, 3).join(', ')}</small>
+            </li>
+        `).join('');
 
-        let selectedSpot = null;
-
-        spots.forEach(s => {
-            const marker = L.marker(s.coords).addTo(map);
-            marker.on('click', () => {
-                selectedSpot = s;
-                document.getElementById('loc-name').innerText = s.name;
-                document.getElementById('status').innerText = "Готови за риболов!";
-                document.getElementById('fishBtn').style.display = 'block';
+        document.querySelectorAll('.spot-item').forEach((item, index) => {
+            item.addEventListener('click', () => {
+                const spot = waterSpots[index];
+                setSpot(spot);
+                map.setView(spot.coords, 10, { animate: true });
             });
         });
+        document.getElementById('spotCount').innerText = `${waterSpots.length} места`;
+        document.getElementById('spotHint').innerText = 'Изберете водоем от списъка или картата';
 
-        async function startFishing() {
-            if (!selectedSpot) return;
-            const btn = document.getElementById('fishBtn');
-            btn.disabled = true;
-            btn.innerText = "Ловите...";
+        waterSpots.forEach(spot => {
+            const marker = L.circleMarker(spot.coords, {
+                radius: 10,
+                fillColor: '#4f8ef7',
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(map);
+            marker.on('click', () => {
+                setSpot(spot);
+                map.setView(spot.coords, 10, { animate: true });
+            });
+        });
+    });
 
-            setTimeout(async () => {
-                const success = Math.random() > 0.4;
-                if (success) {
-                    const fish = selectedSpot.fish[Math.floor(Math.random() * selectedSpot.fish.length)];
-                    alert(`🎉 Успех! Хванахте ${fish} в ${selectedSpot.name}!`);
-                    await saveCatchToDB(fish, selectedSpot.name);
-                } else {
-                    alert("🎣 Рибата се откачи... Опитайте пак!");
-                }
-                btn.disabled = false;
-                btn.innerText = "Започни риболов";
-            }, 1500);
-        }
-    </script>
-</body>
-</html>
+    async function startFishing() {
+        if (!selectedSpot) return;
+        const btn = document.getElementById('fishBtn');
+        btn.disabled = true;
+        btn.innerText = 'Риболов...';
+
+        setTimeout(async () => {
+            const success = Math.random() > 0.35;
+            if (success) {
+                const fish = selectedSpot.fish[Math.floor(Math.random() * selectedSpot.fish.length)];
+                alert(`🎣 Успех! Хванахте ${fish} в ${selectedSpot.name}.`);
+                await saveCatchToDB(fish, selectedSpot.name);
+            } else {
+                alert('😕 Рибата не улови днес. Опитайте пак!');
+            }
+            btn.disabled = false;
+            btn.innerText = 'Започни риболов';
+        }, 1400);
+    }
+</script>
+{% endblock %}
+

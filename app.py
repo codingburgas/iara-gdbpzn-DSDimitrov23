@@ -1,5 +1,5 @@
-import os
-from flask import Flask, jsonify, render_template, request
+﻿import os
+from flask import Flask, jsonify, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
@@ -54,6 +54,11 @@ with app.app_context():
 
 @app.route("/")
 def index():
+    return render_template("login.html")
+
+
+@app.route("/dashboard")
+def dashboard():
     return render_template("index.html")
 
 @app.route("/login")
@@ -67,6 +72,21 @@ def register_page():
 @app.route("/map")
 def map_page():
     return render_template("map.html")
+
+@app.route("/tickets")
+def tickets_page():
+    return render_template("tickets.html")
+
+@app.route("/profile")
+def profile_page():
+    return render_template("profile.html")
+
+@app.route("/api/tickets")
+def get_tickets():
+    tickets = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(20).all()
+    return jsonify([
+        {"id": t.id, "ticket_type": t.ticket_type, "price": t.price, "timestamp": t.timestamp.strftime("%d.%m.%Y %H:%M")} for t in tickets
+    ])
 
 @app.route("/api/register", methods=["POST"])
 def register_user():
