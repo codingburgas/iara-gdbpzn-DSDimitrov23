@@ -15,7 +15,7 @@
         </div>
         <div class="stat-card">
             <small>Общо приходи</small>
-            <h2 id="totalRevenue">0.00 лв.</h2>
+            <h2 id="totalRevenue">0.00 €</h2>
         </div>
         <div class="stat-card">
             <small>Безплатни билети</small>
@@ -34,8 +34,8 @@
 
             <label for="ticketType">Вид билет</label>
             <select id="ticketType">
-                <option value="25.00">Стандартен (над 14г.) - 25.00 лв.</option>
-                <option value="10.00">Под 14г. / Пенсионер - 10.00 лв.</option>
+                <option value="25.00">Стандартен (над 14г.) - 25.00 €</option>
+                <option value="10.00">Под 14г. / Пенсионер - 10.00 €</option>
                 <option value="0.00">Инвалид (с ТЕЛК) - Безплатен</option>
             </select>
 
@@ -48,7 +48,7 @@
             <h3>История на билетите</h3>
             <div id="ticketSummary" style="display:grid; gap:8px; margin-bottom:16px;">
                 <div style="display:flex; justify-content:space-between;"><span>Общо билети</span><strong id="summaryCount">0</strong></div>
-                <div style="display:flex; justify-content:space-between;"><span>Общо приходи</span><strong id="summaryRevenue">0.00 лв.</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Общо приходи</span><strong id="summaryRevenue">0.00 €</strong></div>
                 <div style="display:flex; justify-content:space-between;"><span>Платени билети</span><strong id="summaryPaid">0</strong></div>
             </div>
             <ul id="ticketHistory" style="list-style:none; padding:0; margin:0; display:grid; gap:12px;"></ul>
@@ -118,11 +118,11 @@
         const last = tickets.length ? tickets[0].timestamp : '—';
 
         totalTickets.innerText = tickets.length;
-        totalRevenue.innerText = `${revenue.toFixed(2)} лв.`;
+        totalRevenue.innerText = `${revenue.toFixed(2)} €`;
         freeTickets.innerText = free;
         lastTicket.innerText = last;
         summaryCount.innerText = tickets.length;
-        summaryRevenue.innerText = `${revenue.toFixed(2)} лв.`;
+        summaryRevenue.innerText = `${revenue.toFixed(2)} €`;
         summaryPaid.innerText = paid;
 
         if (!tickets.length) {
@@ -134,7 +134,7 @@
             <li style="background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px; display:grid; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong style="font-size:1rem;">${ticket.ticket_type}</strong>
-                    <span style="font-weight:700;">${ticket.price.toFixed(2)} лв.</span>
+                    <span style="font-weight:700;">${ticket.price.toFixed(2)} €</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; color: var(--muted); font-size:0.93rem;">
                     <span>${ticket.timestamp}</span>

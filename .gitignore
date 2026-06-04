@@ -1,0 +1,13 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Environments
+.env
+venv/
+
+# Database
+*.db

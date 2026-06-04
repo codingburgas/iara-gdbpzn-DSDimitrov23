@@ -226,15 +226,15 @@ async function loadTicketHistory() {
         list.innerHTML = '<li style="color: var(--muted);">Няма издадени билети към момента.</li>';
         return;
     }
-    list.innerHTML = tickets.map(ticket => `
-        <li style="background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px; display:flex; justify-content:space-between; gap:12px;">
-            <div>
-                <strong>${ticket.ticket_type}</strong><br>
-                <span style="color: var(--muted); font-size:0.95rem;">${ticket.timestamp}</span>
-            </div>
-            <div style="font-weight:700;">${ticket.price.toFixed(2)} лв.</div>
-        </li>
-    `).join('');
+        list.innerHTML = tickets.map(ticket => `
+            <li style="background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px; display:flex; justify-content:space-between; gap:12px;">
+                <div>
+                    <strong>${ticket.ticket_type}</strong><br>
+                    <span style="color: var(--muted); font-size:0.95rem;">${ticket.timestamp}</span>
+                </div>
+                <div style="font-weight:700;">${ticket.price.toFixed(2)} €</div>
+            </li>
+        `).join('');
 }
 
 async function saveCatchToDB(fishType, location) {
