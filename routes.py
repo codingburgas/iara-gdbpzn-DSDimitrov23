@@ -1,12 +1,13 @@
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, redirect
 from models import db, User, Vessel, FishingTicket, Catch, Permit, Inspection, Fine
+from sqlalchemy import func
 from datetime import datetime
 
 bp = Blueprint('main', __name__)
 
 @bp.route("/")
 def index():
-    return render_template("login.html")
+    return redirect('/login')
 
 @bp.route("/dashboard")
 def dashboard():
@@ -31,6 +32,10 @@ def tickets_page():
 @bp.route("/profile")
 def profile_page():
     return render_template("profile.html")
+
+@bp.route("/fines")
+def fines_page():
+    return render_template("fines.html")
 
 @bp.route("/api/tickets")
 def get_tickets():
@@ -170,10 +175,78 @@ def get_inspections():
     ins = Inspection.query.order_by(Inspection.timestamp.desc()).limit(100).all()
     return jsonify([{"id": i.id, "inspector": i.inspector, "target_type": i.target_type, "target_id": i.target_id, "location": i.location, "notes": i.notes, "timestamp": i.timestamp.strftime('%d.%m.%Y %H:%M')} for i in ins])
 
+@bp.route('/api/dashboard_stats')
+def dashboard_stats():
+    total_vessels = Vessel.query.count()
+    active_permits = Permit.query.filter_by(active=True).count()
+    total_tickets = FishingTicket.query.count()
+    total_inspections = Inspection.query.count()
+    total_fines = Fine.query.count()
+    total_revenue = db.session.query(func.coalesce(func.sum(FishingTicket.price), 0)).scalar() or 0
+    last_ticket = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).first()
+
+    operations = []
+    for ticket in FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(5):
+        operations.append({
+            'title': f"Издаден билет: {ticket.ticket_type}",
+            'subtitle': f"Цена: {ticket.price:.2f} €",
+            'timestamp': ticket.timestamp.strftime('%d.%m.%Y %H:%M'),
+            'status': ticket.price == 0 and 'Безплатен' or 'Платен'
+        })
+    for inspection in Inspection.query.order_by(Inspection.timestamp.desc()).limit(5):
+        operations.append({
+            'title': f"Инспекция: {inspection.target_type} {inspection.target_id}",
+            'subtitle': inspection.location,
+            'timestamp': inspection.timestamp.strftime('%d.%m.%Y %H:%M'),
+            'status': 'Завършена'
+        })
+    operations.sort(key=lambda item: datetime.strptime(item['timestamp'], '%d.%m.%Y %H:%M'), reverse=True)
+    operations = operations[:6]
+
+    return jsonify({
+        'total_vessels': total_vessels,
+        'active_permits': active_permits,
+        'total_tickets': total_tickets,
+        'total_inspections': total_inspections,
+        'total_fines': total_fines,
+        'total_revenue': float(total_revenue),
+        'last_ticket': last_ticket.timestamp.strftime('%d.%m.%Y %H:%M') if last_ticket else '—',
+        'recent_operations': operations
+    })
+
 @bp.route('/api/issue_fine', methods=['POST'])
 def issue_fine():
     data = request.json
-    f = Fine(inspection_id=data.get('inspection_id'), amount=float(data.get('amount', 0)), issued_to=data.get('issued_to'))
+    f = Fine(
+        inspection_id=data.get('inspection_id'),
+        amount=float(data.get('amount', 0)),
+        issued_to=data.get('issued_to')
+    )
     db.session.add(f)
     db.session.commit()
     return jsonify({'message': 'OK', 'id': f.id}), 201
+
+@bp.route('/api/fines', methods=['GET'])
+def list_fines():
+    fines = Fine.query.order_by(Fine.issued_at.desc()).all()
+    return jsonify([
+        {
+            'id': fine.id,
+            'inspection_id': fine.inspection_id,
+            'amount': fine.amount,
+            'issued_to': fine.issued_to,
+            'paid': fine.paid,
+            'issued_at': fine.issued_at.strftime('%d.%m.%Y %H:%M')
+        }
+        for fine in fines
+    ])
+
+@bp.route('/api/fine/pay', methods=['POST'])
+def pay_fine():
+    data = request.json
+    fine = Fine.query.filter_by(id=data.get('id')).first()
+    if not fine:
+        return jsonify({'error': 'Not found'}), 404
+    fine.paid = True
+    db.session.commit()
+    return jsonify({'message': 'OK'})

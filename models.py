@@ -14,7 +14,7 @@ class User(db.Model):
     role = db.Column(db.String(50), default="Любител Рибар")
     vessel = db.Column(db.String(50), default="—")
     permit = db.Column(db.String(50), default="—")
-    member_since = db.Column(db.String(30), default="Май 2026")
+    member_since = db.Column(db.String(30), default=now_date_str)
 
 class Vessel(db.Model):
     id = db.Column(db.Integer, primary_key=True)

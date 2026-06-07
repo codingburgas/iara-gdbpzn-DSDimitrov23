@@ -4,11 +4,12 @@
     <div class="topbar">
         <div class="title-group">
             <p>Добре дошли обратно, инспектор</p>
-            <h1>Дашборд на ИАРА</h1>
+            <h1>Табло за управление на ИАРА</h1>
         </div>
         <div class="topbar-actions">
             <button class="primary" onclick="showSection('dashboard')">Табло</button>
             <button onclick="showSection('tickets')">Билети</button>
+            <button onclick="showSection('inspections')">Инспекции</button>
             <button onclick="showSection('profile')">Профил</button>
         </div>
     </div>
@@ -17,23 +18,23 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <small>Общо кораби</small>
-                <h2>1 240</h2>
-                <div class="delta">+4.2% спрямо предходния месец</div>
+                <h2 id="stat-vessels">0</h2>
+                <div class="delta">Активни записи в системата</div>
             </div>
             <div class="stat-card">
                 <small>Активни лицензи</small>
-                <h2>892</h2>
-                <div class="delta">+2.8% спрямо предходния месец</div>
+                <h2 id="stat-permits">0</h2>
+                <div class="delta">Aктуални разрешителни</div>
             </div>
             <div class="stat-card">
                 <small>Проверки</small>
-                <h2>156</h2>
-                <div class="delta">+11% спрямо предходния месец</div>
+                <h2 id="stat-inspections">0</h2>
+                <div class="delta">Записани проверки</div>
             </div>
             <div class="stat-card">
                 <small>Издадени билети</small>
-                <h2>4 210</h2>
-                <div class="delta">+6.4% спрямо предходния месец</div>
+                <h2 id="stat-tickets">0</h2>
+                <div class="delta">Общо приходи: <span id="stat-revenue">0.00 €</span></div>
             </div>
         </div>
 
@@ -53,35 +54,8 @@
             </div>
             <div class="transactions-card">
                 <h3>Последни операции</h3>
-                <ul>
-                    <li>
-                        <div class="transaction-info">
-                            <strong>Проверка на кораб BGR001</strong>
-                            <span>19:32, 02 Юни</span>
-                        </div>
-                        <div class="amount positive">OK</div>
-                    </li>
-                    <li>
-                        <div class="transaction-info">
-                            <strong>Издаване на билет</strong>
-                            <span>08:15, 01 Юни</span>
-                        </div>
-                        <div class="amount positive">+ €25</div>
-                    </li>
-                    <li>
-                        <div class="transaction-info">
-                            <strong>Доклад за инспекция</strong>
-                            <span>14:42, 31 Май</span>
-                        </div>
-                        <div class="amount negative">Пропуск</div>
-                    </li>
-                    <li>
-                        <div class="transaction-info">
-                            <strong>Регистрация на нов съд</strong>
-                            <span>12:20, 28 Май</span>
-                        </div>
-                        <div class="amount positive">OK</div>
-                    </li>
+                <ul id="recentOperations">
+                    <li style="color: var(--muted);">Зареждане...</li>
                 </ul>
             </div>
         </div>
@@ -136,9 +110,17 @@
         </div>
         <div class="chart-card">
             <h3>Запис на инспекция</h3>
-            <input type="text" placeholder="Локация">
-            <input type="text" placeholder="Инспектор">
-            <button class="primary" onclick="alert('Докладът е записан!')">Изпрати</button>
+            <input id="inspectionLocation" type="text" placeholder="Локация" style="margin-bottom: 12px;">
+            <input id="inspectionInspector" type="text" placeholder="Инспектор" style="margin-bottom: 12px;">
+            <input id="inspectionTargetType" type="text" placeholder="Тип на целта (кораб/човек)" style="margin-bottom: 12px;">
+            <input id="inspectionTargetId" type="text" placeholder="Идентификатор на целта" style="margin-bottom: 12px;">
+            <textarea id="inspectionNotes" placeholder="Бележки" rows="4" style="margin-bottom: 12px;"></textarea>
+            <button class="primary" onclick="submitInspection()">Изпрати инспекция</button>
+            <p id="inspectionMsg" class="muted" style="margin-top: 14px; min-height: 26px;"></p>
+        </div>
+        <div class="transactions-card" style="margin-top: 24px;">
+            <h3>Последни инспекции</h3>
+            <ul id="inspectionHistory" style="list-style:none; padding:0; margin:0; display:grid; gap:12px;"></ul>
         </div>
     </div>
 
