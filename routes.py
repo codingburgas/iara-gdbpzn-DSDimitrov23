@@ -1,182 +1,469 @@
-from flask import Blueprint, jsonify, render_template, request, redirect
+from flask import Blueprint, jsonify, render_template, request, redirect, session
 from models import db, User, Vessel, FishingTicket, Catch, Permit, Inspection, Fine
 from sqlalchemy import func
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+import re
 
 bp = Blueprint('main', __name__)
 
-@bp.route("/")
+EMAIL_REGEX = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+
+def json_error(message, status=400):
+    return jsonify({'error': message}), status
+
+
+def parse_json_request():
+    data = request.get_json(silent=True)
+    if data is None:
+        return None, json_error('Invalid JSON payload', 400)
+    return data, None
+
+
+def require_login(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        username = session.get('username')
+        if not username:
+            return json_error('Authentication required', 401)
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            session.pop('username', None)
+            return json_error('Authentication required', 401)
+
+        return func(*args, current_user=user, **kwargs)
+    return wrapper
+
+
+def authorization_required(target_username, current_user):
+    return current_user.username == target_username or current_user.role.lower() == 'admin'
+
+
+def validate_registration(data):
+    if not data.get('username') or not isinstance(data.get('username'), str):
+        return 'Username is required'
+    if not data.get('email') or not isinstance(data.get('email'), str) or not EMAIL_REGEX.match(data['email']):
+        return 'Valid email is required'
+    password = data.get('password')
+    if not password or not isinstance(password, str) or len(password) < 8:
+        return 'Password must be at least 8 characters long'
+    return None
+
+
+def serialize_user(user):
+    return {
+        'username': user.username,
+        'email': user.email,
+        'fullname': user.fullname,
+        'phone': user.phone,
+        'role': user.role,
+        'vessel': user.vessel,
+        'permit': user.permit,
+        'member_since': user.member_since
+    }
+
+
+@bp.route('/')
 def index():
     return redirect('/login')
 
-@bp.route("/dashboard")
+
+@bp.route('/dashboard')
 def dashboard():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@bp.route("/login")
+
+@bp.route('/login')
 def login_page():
-    return render_template("login.html")
+    return render_template('login.html')
 
-@bp.route("/register")
+
+@bp.route('/register')
 def register_page():
-    return render_template("register.html")
+    return render_template('register.html')
 
-@bp.route("/map")
+
+@bp.route('/map')
 def map_page():
-    return render_template("map.html")
+    return render_template('map.html')
 
-@bp.route("/tickets")
+
+@bp.route('/tickets')
 def tickets_page():
-    return render_template("tickets.html")
+    return render_template('tickets.html')
 
-@bp.route("/profile")
+
+@bp.route('/profile')
 def profile_page():
-    return render_template("profile.html")
+    return render_template('profile.html')
 
-@bp.route("/fines")
+
+@bp.route('/fines')
 def fines_page():
-    return render_template("fines.html")
+    return render_template('fines.html')
 
-@bp.route("/api/tickets")
-def get_tickets():
+
+@bp.route('/api/tickets')
+@require_login
+def get_tickets(current_user):
     tickets = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(20).all()
     return jsonify([
-        {"id": t.id, "ticket_type": t.ticket_type, "price": t.price, "timestamp": t.timestamp.strftime("%d.%m.%Y %H:%M")} for t in tickets
+        {
+            'id': t.id,
+            'ticket_type': t.ticket_type,
+            'price': t.price,
+            'timestamp': t.timestamp.strftime('%d.%m.%Y %H:%M')
+        }
+        for t in tickets
     ])
 
-@bp.route("/api/register", methods=["POST"])
+
+@bp.route('/api/register', methods=['POST'])
 def register_user():
-    data = request.json
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({"error": "Exists"}), 400
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    validation_error = validate_registration(data)
+    if validation_error:
+        return json_error(validation_error, 400)
+
+    if User.query.filter((User.username == data['username']) | (User.email == data['email'])).first():
+        return json_error('Username or email already exists', 400)
+
     user = User(
-        username=data['username'],
-        email=data['email'],
-        password=data['password'],
-        fullname=data.get('fullname', '—') if data.get('fullname') else '—',
-        phone=data.get('phone', '—') if data.get('phone') else '—',
+        username=data['username'].strip(),
+        email=data['email'].strip().lower(),
+        password=generate_password_hash(data['password'], method='pbkdf2:sha256', salt_length=16),
+        fullname=data.get('fullname', '—') or '—',
+        phone=data.get('phone', '—') or '—',
         role=data.get('role', 'Любител Рибар'),
-        vessel=data.get('vessel', '—') if data.get('vessel') else '—',
-        permit=data.get('permit', '—') if data.get('permit') else '—'
+        vessel=data.get('vessel', '—') or '—',
+        permit=data.get('permit', '—') or '—'
     )
     db.session.add(user)
     db.session.commit()
-    return jsonify({"message": "OK"}), 201
+    return jsonify({'message': 'OK'}), 201
 
-@bp.route("/api/login", methods=["POST"])
+
+@bp.route('/api/login', methods=['POST'])
 def login_user():
-    data = request.json
-    user = User.query.filter_by(username=data['username'], password=data['password']).first()
-    if user:
-        return jsonify({"message": "OK", "username": user.username}), 200
-    return jsonify({"error": "Invalid"}), 401
+    data, error = parse_json_request()
+    if error:
+        return error
 
-@bp.route("/api/user/<string:username>")
-def get_user_details(username):
+    if not data.get('username') or not data.get('password'):
+        return json_error('Username and password are required', 400)
+
+    user = User.query.filter_by(username=data['username']).first()
+    if not user or not check_password_hash(user.password, data['password']):
+        return json_error('Invalid credentials', 401)
+
+    session.clear()
+    session['username'] = user.username
+    session.permanent = True
+
+    return jsonify({'message': 'OK', 'username': user.username, 'role': user.role})
+
+
+@bp.route('/api/logout', methods=['POST'])
+@require_login
+def logout_user(current_user):
+    session.clear()
+    return jsonify({'message': 'Logged out'})
+
+
+@bp.route('/api/me')
+@require_login
+def get_current_user(current_user):
+    return jsonify(serialize_user(current_user))
+
+
+@bp.route('/api/user/<string:username>')
+@require_login
+def get_user_details(username, current_user):
+    if not authorization_required(username, current_user):
+        return json_error('Forbidden', 403)
+
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify({
-        "username": user.username,
-        "email": user.email,
-        "fullname": user.fullname,
-        "phone": user.phone,
-        "role": user.role,
-        "vessel": user.vessel,
-        "permit": user.permit,
-        "member_since": user.member_since
-    })
+        return json_error('Not found', 404)
 
-@bp.route("/api/user/<string:username>/edit", methods=["POST"])
-def edit_user_profile(username):
+    return jsonify(serialize_user(user))
+
+
+@bp.route('/api/user/<string:username>/edit', methods=['PATCH'])
+@require_login
+def edit_user_profile(username, current_user):
+    if not authorization_required(username, current_user):
+        return json_error('Forbidden', 403)
+
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"error": "Not found"}), 404
-    data = request.json
-    user.fullname = data.get('fullname', user.fullname)
-    user.email = data.get('email', user.email)
-    user.phone = data.get('phone', user.phone)
+        return json_error('Not found', 404)
+
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if data.get('fullname'):
+        user.fullname = data['fullname']
+    if data.get('email') and EMAIL_REGEX.match(data['email']):
+        user.email = data['email'].strip().lower()
+    if data.get('phone'):
+        user.phone = data['phone']
+
     db.session.commit()
-    return jsonify({"message": "OK"})
+    return jsonify({'message': 'OK'})
 
-@bp.route("/api/user/<string:username>/password", methods=["POST"])
-def change_password(username):
+
+@bp.route('/api/user/<string:username>/password', methods=['PATCH'])
+@require_login
+def change_password(username, current_user):
+    if not authorization_required(username, current_user):
+        return json_error('Forbidden', 403)
+
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"error": "Not found"}), 404
-    data = request.json
-    user.password = data.get('password')
-    db.session.commit()
-    return jsonify({"message": "OK"})
+        return json_error('Not found', 404)
 
-@bp.route("/api/check_permit/<string:cfr>")
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    old_password = data.get('old_password')
+    new_password = data.get('password')
+    if not old_password or not new_password:
+        return json_error('Old password and new password are required', 400)
+    if not check_password_hash(user.password, old_password):
+        return json_error('Current password is incorrect', 401)
+    if len(new_password) < 8:
+        return json_error('Password must be at least 8 characters long', 400)
+
+    user.password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=16)
+    db.session.commit()
+    return jsonify({'message': 'OK'})
+
+
+@bp.route('/api/check_permit/<string:cfr>')
 def check_permit(cfr):
-    v = Vessel.query.filter_by(cfr=cfr.upper()).first()
-    if not v:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify({"vessel": v.name, "captain": v.captain, "expires": v.valid_until})
+    vessel = Vessel.query.filter_by(cfr=cfr.upper()).first()
+    if not vessel:
+        return json_error('Not found', 404)
+    return jsonify({'vessel': vessel.name, 'captain': vessel.captain, 'expires': vessel.valid_until})
+
 
 @bp.route('/api/issue_ticket', methods=['POST'])
-def issue_ticket():
-    data = request.json
-    t = FishingTicket(ticket_type=data['type'], price=float(data['price']))
-    db.session.add(t)
+@require_login
+def issue_ticket(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    ticket_type = data.get('type')
+    price = data.get('price')
+    if not ticket_type or price is None:
+        return json_error('Ticket type and price are required', 400)
+
+    try:
+        price_value = float(price)
+    except (ValueError, TypeError):
+        return json_error('Invalid price', 400)
+
+    ticket = FishingTicket(ticket_type=ticket_type, price=price_value)
+    db.session.add(ticket)
     db.session.commit()
-    return jsonify({"message": "OK"}), 201
+    return jsonify({'message': 'OK', 'id': ticket.id}), 201
+
 
 @bp.route('/api/save_catch', methods=['POST'])
-def save_catch():
-    data = request.json
-    c = Catch(fish_type=data['fish_type'], location=data['location'])
-    db.session.add(c)
+@require_login
+def save_catch(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if not data.get('fish_type') or not data.get('location'):
+        return json_error('Fish type and location are required', 400)
+
+    catch = Catch(fish_type=data['fish_type'], location=data['location'])
+    db.session.add(catch)
     db.session.commit()
-    return jsonify({"message": "OK"}), 201
+    return jsonify({'message': 'OK', 'id': catch.id}), 201
+
 
 @bp.route('/api/vessels', methods=['GET'])
-def list_vessels():
+@require_login
+def list_vessels(current_user):
     vessels = Vessel.query.order_by(Vessel.name).all()
-    return jsonify([{"id": v.id, "cfr": v.cfr, "name": v.name, "captain": v.captain, "valid_until": v.valid_until, "active": v.active} for v in vessels])
+    return jsonify([
+        {
+            'id': v.id,
+            'cfr': v.cfr,
+            'name': v.name,
+            'captain': v.captain,
+            'valid_until': v.valid_until,
+            'active': v.active
+        }
+        for v in vessels
+    ])
+
 
 @bp.route('/api/vessel', methods=['POST'])
-def create_vessel():
-    data = request.json
-    if Vessel.query.filter_by(cfr=data.get('cfr')).first():
-        return jsonify({'error': 'exists'}), 400
-    v = Vessel(cfr=data.get('cfr'), name=data.get('name'), captain=data.get('captain'), valid_until=data.get('valid_until', '2026-12-31'))
-    db.session.add(v)
+@require_login
+def create_vessel(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if not data.get('cfr') or not data.get('name'):
+        return json_error('CFR and vessel name are required', 400)
+    if Vessel.query.filter_by(cfr=data['cfr']).first():
+        return json_error('Vessel with this CFR already exists', 400)
+
+    vessel = Vessel(
+        cfr=data['cfr'].strip().upper(),
+        name=data['name'].strip(),
+        captain=data.get('captain', '').strip() or '—',
+        valid_until=data.get('valid_until', '2026-12-31')
+    )
+    db.session.add(vessel)
     db.session.commit()
-    return jsonify({'message': 'OK', 'id': v.id}), 201
+    return jsonify({'message': 'OK', 'id': vessel.id}), 201
+
+
+@bp.route('/api/vessel/<int:vessel_id>', methods=['PATCH'])
+@require_login
+def update_vessel(vessel_id, current_user):
+    vessel = Vessel.query.get(vessel_id)
+    if not vessel:
+        return json_error('Not found', 404)
+
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if data.get('name'):
+        vessel.name = data['name']
+    if data.get('captain'):
+        vessel.captain = data['captain']
+    if data.get('valid_until'):
+        vessel.valid_until = data['valid_until']
+    if 'active' in data:
+        vessel.active = bool(data['active'])
+
+    db.session.commit()
+    return jsonify({'message': 'OK'})
+
 
 @bp.route('/api/permits', methods=['GET'])
-def list_permits():
-    perms = Permit.query.order_by(Permit.valid_until.desc()).all()
-    return jsonify([{"id": p.id, "owner": p.owner, "vessel_cfr": p.vessel_cfr, "permit_no": p.permit_no, "valid_from": p.valid_from, "valid_until": p.valid_until, "active": p.active} for p in perms])
+@require_login
+def list_permits(current_user):
+    permits = Permit.query.order_by(Permit.valid_until.desc()).all()
+    return jsonify([
+        {
+            'id': p.id,
+            'owner': p.owner,
+            'vessel_cfr': p.vessel_cfr,
+            'permit_no': p.permit_no,
+            'valid_from': p.valid_from,
+            'valid_until': p.valid_until,
+            'active': p.active
+        }
+        for p in permits
+    ])
+
 
 @bp.route('/api/permit', methods=['POST'])
-def create_permit():
-    data = request.json
-    if Permit.query.filter_by(permit_no=data.get('permit_no')).first():
-        return jsonify({'error': 'exists'}), 400
-    p = Permit(owner=data.get('owner'), vessel_cfr=data.get('vessel_cfr'), permit_no=data.get('permit_no'), valid_from=data.get('valid_from', datetime.utcnow().strftime('%Y-%m-%d')), valid_until=data.get('valid_until', '2026-12-31'), active=True)
-    db.session.add(p)
+@require_login
+def create_permit(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if not data.get('owner') or not data.get('vessel_cfr') or not data.get('permit_no'):
+        return json_error('Owner, vessel CFR and permit number are required', 400)
+    if Permit.query.filter_by(permit_no=data['permit_no']).first():
+        return json_error('Permit number already exists', 400)
+
+    permit = Permit(
+        owner=data['owner'].strip(),
+        vessel_cfr=data['vessel_cfr'].strip().upper(),
+        permit_no=data['permit_no'].strip(),
+        valid_from=data.get('valid_from', datetime.utcnow().strftime('%Y-%m-%d')),
+        valid_until=data.get('valid_until', '2026-12-31'),
+        active=bool(data.get('active', True))
+    )
+    db.session.add(permit)
     db.session.commit()
-    return jsonify({'message': 'OK', 'id': p.id}), 201
+    return jsonify({'message': 'OK', 'id': permit.id}), 201
+
+
+@bp.route('/api/permit/<int:permit_id>/status', methods=['PATCH'])
+@require_login
+def update_permit_status(permit_id, current_user):
+    permit = Permit.query.get(permit_id)
+    if not permit:
+        return json_error('Not found', 404)
+
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if 'active' not in data:
+        return json_error('active field is required', 400)
+
+    permit.active = bool(data['active'])
+    db.session.commit()
+    return jsonify({'message': 'OK'})
+
 
 @bp.route('/api/inspection', methods=['POST'])
-def record_inspection():
-    data = request.json
-    ins = Inspection(inspector=data.get('inspector'), target_type=data.get('target_type'), target_id=data.get('target_id'), location=data.get('location'), notes=data.get('notes', ''))
-    db.session.add(ins)
+@require_login
+def record_inspection(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if not data.get('inspector') or not data.get('target_type') or not data.get('target_id'):
+        return json_error('Inspector, target type and target id are required', 400)
+
+    inspection = Inspection(
+        inspector=data['inspector'].strip(),
+        target_type=data['target_type'].strip(),
+        target_id=data['target_id'].strip(),
+        location=data.get('location', '').strip(),
+        notes=data.get('notes', '').strip()
+    )
+    db.session.add(inspection)
     db.session.commit()
-    return jsonify({'message': 'OK', 'id': ins.id}), 201
+    return jsonify({'message': 'OK', 'id': inspection.id}), 201
+
 
 @bp.route('/api/inspections', methods=['GET'])
-def get_inspections():
-    ins = Inspection.query.order_by(Inspection.timestamp.desc()).limit(100).all()
-    return jsonify([{"id": i.id, "inspector": i.inspector, "target_type": i.target_type, "target_id": i.target_id, "location": i.location, "notes": i.notes, "timestamp": i.timestamp.strftime('%d.%m.%Y %H:%M')} for i in ins])
+@require_login
+def get_inspections(current_user):
+    inspections = Inspection.query.order_by(Inspection.timestamp.desc()).limit(100).all()
+    return jsonify([
+        {
+            'id': i.id,
+            'inspector': i.inspector,
+            'target_type': i.target_type,
+            'target_id': i.target_id,
+            'location': i.location,
+            'notes': i.notes,
+            'timestamp': i.timestamp.strftime('%d.%m.%Y %H:%M')
+        }
+        for i in inspections
+    ])
+
 
 @bp.route('/api/dashboard_stats')
-def dashboard_stats():
+@require_login
+def dashboard_stats(current_user):
     total_vessels = Vessel.query.count()
     active_permits = Permit.query.filter_by(active=True).count()
     total_tickets = FishingTicket.query.count()
@@ -188,14 +475,14 @@ def dashboard_stats():
     operations = []
     for ticket in FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(5):
         operations.append({
-            'title': f"Издаден билет: {ticket.ticket_type}",
-            'subtitle': f"Цена: {ticket.price:.2f} €",
+            'title': f'Издаден билет: {ticket.ticket_type}',
+            'subtitle': f'Цена: {ticket.price:.2f} €',
             'timestamp': ticket.timestamp.strftime('%d.%m.%Y %H:%M'),
-            'status': ticket.price == 0 and 'Безплатен' or 'Платен'
+            'status': 'Безплатен' if ticket.price == 0 else 'Платен'
         })
     for inspection in Inspection.query.order_by(Inspection.timestamp.desc()).limit(5):
         operations.append({
-            'title': f"Инспекция: {inspection.target_type} {inspection.target_id}",
+            'title': f'Инспекция: {inspection.target_type} {inspection.target_id}',
             'subtitle': inspection.location,
             'timestamp': inspection.timestamp.strftime('%d.%m.%Y %H:%M'),
             'status': 'Завършена'
@@ -214,20 +501,35 @@ def dashboard_stats():
         'recent_operations': operations
     })
 
+
 @bp.route('/api/issue_fine', methods=['POST'])
-def issue_fine():
-    data = request.json
-    f = Fine(
-        inspection_id=data.get('inspection_id'),
-        amount=float(data.get('amount', 0)),
-        issued_to=data.get('issued_to')
+@require_login
+def issue_fine(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    if data.get('inspection_id') is None or data.get('issued_to') is None:
+        return json_error('Inspection ID and issued_to are required', 400)
+
+    try:
+        amount = float(data.get('amount', 0))
+    except (ValueError, TypeError):
+        return json_error('Invalid amount', 400)
+
+    fine = Fine(
+        inspection_id=data['inspection_id'],
+        amount=amount,
+        issued_to=data['issued_to']
     )
-    db.session.add(f)
+    db.session.add(fine)
     db.session.commit()
-    return jsonify({'message': 'OK', 'id': f.id}), 201
+    return jsonify({'message': 'OK', 'id': fine.id}), 201
+
 
 @bp.route('/api/fines', methods=['GET'])
-def list_fines():
+@require_login
+def list_fines(current_user):
     fines = Fine.query.order_by(Fine.issued_at.desc()).all()
     return jsonify([
         {
@@ -241,12 +543,13 @@ def list_fines():
         for fine in fines
     ])
 
-@bp.route('/api/fine/pay', methods=['POST'])
-def pay_fine():
-    data = request.json
-    fine = Fine.query.filter_by(id=data.get('id')).first()
+
+@bp.route('/api/fine/<int:fine_id>/pay', methods=['POST'])
+@require_login
+def pay_fine(fine_id, current_user):
+    fine = Fine.query.get(fine_id)
     if not fine:
-        return jsonify({'error': 'Not found'}), 404
+        return json_error('Not found', 404)
     fine.paid = True
     db.session.commit()
     return jsonify({'message': 'OK'})
