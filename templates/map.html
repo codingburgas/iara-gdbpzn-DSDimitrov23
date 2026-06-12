@@ -169,6 +169,45 @@
         padding: 8px 12px;
         font-size: 0.9rem;
     }
+    .season-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 4px;
+    }
+    .season-item {
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .season-item strong {
+        color: #f7fbff;
+        font-size: 0.94rem;
+    }
+    .season-item span {
+        color: #bfc9e3;
+        font-size: 0.9rem;
+    }
+    .season-item small {
+        color: #8ea9d6;
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+    .fact-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .fact-item {
+        color: #dfe7f5;
+        line-height: 1.45;
+        padding: 10px 12px;
+        border-left: 3px solid #ffb347;
+        border-radius: 10px;
+        background: rgba(255,179,71,0.08);
+    }
     .spot-list {
         list-style: none;
         margin: 0;
@@ -324,11 +363,18 @@
                 <div><strong>Най-често риби:</strong> <span id="loc-fish">—</span></div>
                 <div><strong>Условия:</strong> <span id="loc-info">—</span></div>
             </div>
+            <div>
+                <strong>Кога е позволено да се ловят</strong>
+                <div class="season-list" id="loc-seasons"></div>
+            </div>
+            <div>
+                <strong>Любопитни факти</strong>
+                <div class="fact-list" id="loc-facts"></div>
+            </div>
             <div class="spot-badge" id="loc-badges"></div>
             <div><strong>Водоеми и реки</strong></div>
             <ul class="spot-list" id="spotList"></ul>
             <div class="fishing-actions">
-                <button class="primary" id="fishBtn" onclick="startFishing()" style="display:none;">Започни риболов</button>
                 <button onclick="window.location.href='/dashboard'">Назад към таблото</button>
             </div>
         </section>
@@ -339,22 +385,7 @@
 {% block extra_scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const waterSpots = [
-        { name: 'Язовир Искър', coords: [42.450, 23.550], type: 'Язовир', region: 'София', fish: ['Пъстърва', 'Костур', 'Платика'], info: 'Силно зарибен язовир с туристическа зона и обширни рибарски места.' },
-        { name: 'Река Камчия', coords: [43.020, 27.880], type: 'Река', region: 'Варна', fish: ['Шаран', 'Каракуда', 'Бяла риба'], info: 'Течаща река с различни дълбочини и много добри места за шаранова атака.' },
-        { name: 'Река Струма', coords: [42.000, 23.150], type: 'Река', region: 'Югозапад', fish: ['Пъстърва', 'Кефал', 'Черен мряна'], info: 'Хладна планинска река, подходяща за мухарски риболов.' },
-        { name: 'Язовир Копринка', coords: [42.450, 25.100], type: 'Язовир', region: 'Стара Загора', fish: ['Шаран', 'Щука', 'Бял амур'], info: 'Голям водоем с бавна вода и множество риболовни лагери.' },
-        { name: 'Река Марица', coords: [42.000, 26.850], type: 'Река', region: 'Югоизток', fish: ['Сом', 'Шаран', 'Каракуда'], info: 'Широка река с много подводни канали и спокойни брегове.' },
-        { name: 'Езерото Огоста', coords: [43.237, 23.189], type: 'Езеро', region: 'Монтана', fish: ['Костур', 'Шаран', 'Платика'], info: 'Малко езеро с лесен достъп и отлични условия за семейни риболовци.' },
-        { name: 'Язовир Янтра', coords: [43.170, 25.580], type: 'Язовир', region: 'Велико Търново', fish: ['Костур', 'Шаран', 'Амур'], info: 'Популярен язовир за риболов на щука и шаран.' },
-        { name: 'Река Дунав', coords: [44.000, 27.500], type: 'Река', region: 'Северна България', fish: ['Сом', 'Шаран', 'Кефал'], info: 'Мощна река с възможности за голям улов и конкурентни фишове.' },
-        { name: 'Язовир Широка поляна', coords: [41.940, 24.310], type: 'Язовир', region: 'Пловдив', fish: ['Щука', 'Шаран', 'Платика'], info: 'Красив язовир в Родопите с добро сцепление и отлични брегове.' },
-        { name: 'Река Арда', coords: [41.591, 25.574], type: 'Река', region: 'Югоизток', fish: ['Пъстърва', 'Каракуда', 'Шаран'], info: 'Планинска река с бързо течение и чудесни места за мухарски риболов.' },
-        { name: 'Езерото Пясъчник', coords: [43.838, 25.271], type: 'Езеро', region: 'Стара Загора', fish: ['Костур', 'Пъстърва', 'Бяла риба'], info: 'Спокойно езеро с добър достъп и чиста вода.' },
-        { name: 'Река Въча', coords: [41.900, 24.170], type: 'Река', region: 'Родопи', fish: ['Пъстърва', 'Кефал', 'Черен мряна'], info: 'Кристално река с перфектни условия за мухарски риболов.' },
-        { name: 'Река Лом', coords: [43.757, 23.211], type: 'Река', region: 'Северозапад', fish: ['Шаран', 'Каракуда', 'Костур'], info: 'Спокойна река с лесен достъп и много риболовни брегове.' }
-    ];
-
+    let waterSpots = [];
     let selectedSpot = null;
     let currentMarker = null;
     let mapInstance = null;
@@ -376,6 +407,49 @@
         fillOpacity: 1
     };
 
+    function parseJsonArray(value) {
+        if (!value) return [];
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            console.warn('Invalid JSON from river database:', value, err);
+            return [];
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
+
+    async function loadRiversFromDatabase() {
+        try {
+            const response = await fetch('/api/rivers');
+            if (!response.ok) throw new Error('Failed to load rivers');
+            const rivers = await response.json();
+            waterSpots = rivers.map(river => ({
+                name: river.name,
+                coords: [river.latitude, river.longitude],
+                type: river.type,
+                region: river.region,
+                fish: parseJsonArray(river.fish),
+                fishRules: parseJsonArray(river.fish_rules),
+                facts: parseJsonArray(river.interesting_facts),
+                info: river.description || 'Няма въведена допълнителна информация.'
+            }));
+            return waterSpots;
+        } catch (err) {
+            console.error('Error loading rivers:', err);
+            return [];
+        }
+    }
+
     function highlightSpot(name) {
         const items = document.querySelectorAll('.spot-item');
         items.forEach(item => {
@@ -390,6 +464,18 @@
         document.getElementById('loc-type').innerText = spot.type;
         document.getElementById('loc-fish').innerText = spot.fish.join(', ');
         document.getElementById('loc-info').innerText = spot.info;
+        const seasons = document.getElementById('loc-seasons');
+        seasons.innerHTML = spot.fishRules.length ? spot.fishRules.map(rule => `
+            <div class="season-item">
+                <strong>${escapeHtml(rule.name)}</strong>
+                <span>${escapeHtml(rule.season)}</span>
+                <small>${escapeHtml(rule.note || 'Проверете актуалната заповед за конкретния водоем.')}</small>
+            </div>
+        `).join('') : '<div class="season-item"><span>Няма въведени сезонни правила.</span></div>';
+        const facts = document.getElementById('loc-facts');
+        facts.innerHTML = spot.facts.length ? spot.facts.map(fact => `
+            <div class="fact-item">${escapeHtml(fact)}</div>
+        `).join('') : '<div class="fact-item">Няма въведени любопитни факти.</div>';
         const badges = document.getElementById('loc-badges');
         badges.innerHTML = '';
         spot.fish.forEach(f => {
@@ -398,7 +484,6 @@
             chip.textContent = f;
             badges.appendChild(chip);
         });
-        document.getElementById('fishBtn').style.display = 'block';
         document.getElementById('spotHint').innerText = `Избрано: ${spot.name}`;
         highlightSpot(spot.name);
 
@@ -421,7 +506,9 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadRiversFromDatabase();
+        
         mapInstance = L.map('map').setView([42.7, 25.3], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
@@ -430,10 +517,10 @@
 
         const spotList = document.getElementById('spotList');
         spotList.innerHTML = waterSpots.map(spot => `
-            <li class="spot-item" data-name="${spot.name}">
-                <strong>${spot.name}</strong>
-                <div class="spot-type">${spot.type} • ${spot.region}</div>
-                <small>Обикновено: ${spot.fish.slice(0, 3).join(', ')}</small>
+            <li class="spot-item" data-name="${escapeHtml(spot.name)}">
+                <strong>${escapeHtml(spot.name)}</strong>
+                <div class="spot-type">${escapeHtml(spot.type)} • ${escapeHtml(spot.region)}</div>
+                <small>Обикновено: ${escapeHtml(spot.fish.slice(0, 3).join(', '))}</small>
             </li>
         `).join('');
 
@@ -450,12 +537,20 @@
         waterSpots.forEach(spot => {
             const marker = L.circleMarker(spot.coords, markerStyle).addTo(mapInstance);
             markers[spot.name] = marker;
+            const rulesPreview = spot.fishRules.length
+                ? spot.fishRules.slice(0, 3).map(rule => `${escapeHtml(rule.name)}: ${escapeHtml(rule.season)}`).join('<br>')
+                : 'Няма въведени сезонни правила.';
+            const factsPreview = spot.facts.length
+                ? escapeHtml(spot.facts[0])
+                : 'Няма въведени любопитни факти.';
             marker.bindPopup(`
                 <div style="font-size:0.95rem; line-height:1.4; max-width: 220px;">
-                    <strong style="font-size:1rem;">${spot.name}</strong><br>
-                    <span style="color:#99b7e2;">${spot.type} • ${spot.region}</span><br>
-                    <small style="color:#b8c7f1; display:block; margin-top:8px;">Най-често: ${spot.fish.slice(0,3).join(', ')}</small>
-                    <button onclick="setSpotByName('${spot.name}')" style="margin-top:10px; width:100%; padding:8px 10px; border:none; border-radius:12px; background:#4f8ef7; color:#fff; cursor:pointer;">Избери място</button>
+                    <strong style="font-size:1rem;">${escapeHtml(spot.name)}</strong><br>
+                    <span style="color:#99b7e2;">${escapeHtml(spot.type)} • ${escapeHtml(spot.region)}</span><br>
+                    <small style="color:#b8c7f1; display:block; margin-top:8px;">Най-често: ${escapeHtml(spot.fish.slice(0,3).join(', '))}</small>
+                    <small style="color:#dbe7ff; display:block; margin-top:8px;">${rulesPreview}</small>
+                    <small style="color:#ffd89a; display:block; margin-top:8px;">${factsPreview}</small>
+                    <button onclick="setSpotByName('${escapeHtml(spot.name)}')" style="margin-top:10px; width:100%; padding:8px 10px; border:none; border-radius:12px; background:#4f8ef7; color:#fff; cursor:pointer;">Избери място</button>
                 </div>
             `);
             marker.on('click', () => {
@@ -464,26 +559,6 @@
             });
         });
     });
-
-    async function startFishing() {
-        if (!selectedSpot) return;
-        const btn = document.getElementById('fishBtn');
-        btn.disabled = true;
-        btn.innerText = 'Риболов...';
-
-        setTimeout(async () => {
-            const success = Math.random() > 0.35;
-            if (success) {
-                const fish = selectedSpot.fish[Math.floor(Math.random() * selectedSpot.fish.length)];
-                alert(`🎣 Успех! Хванахте ${fish} в ${selectedSpot.name}.`);
-                await saveCatchToDB(fish, selectedSpot.name);
-            } else {
-                alert('😕 Рибата не улови днес. Опитайте пак!');
-            }
-            btn.disabled = false;
-            btn.innerText = 'Започни риболов';
-        }, 1400);
-    }
 </script>
 {% endblock %}
 

@@ -334,14 +334,6 @@ async function loadInspectionHistory() {
         `).join('');
 }
 
-async function saveCatchToDB(fishType, location) {
-    await fetch('/api/save_catch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fish_type: fishType, location: location })
-    });
-}
-
 async function loadFineData() {
     const res = await fetch('/api/fines');
     const list = document.getElementById('fineList');

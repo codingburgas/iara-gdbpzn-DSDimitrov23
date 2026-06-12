@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, render_template, request, redirect, session
-from models import db, User, Vessel, FishingTicket, Catch, Permit, Inspection, Fine
+from models import db, User, Vessel, FishingTicket, River, Permit, Inspection, Fine
 from sqlalchemy import func
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -127,6 +127,9 @@ def register_user():
     if error:
         return error
 
+    data['username'] = data['username'].strip() if isinstance(data.get('username'), str) else data.get('username')
+    data['email'] = data['email'].strip().lower() if isinstance(data.get('email'), str) else data.get('email')
+
     validation_error = validate_registration(data)
     if validation_error:
         return json_error(validation_error, 400)
@@ -135,8 +138,8 @@ def register_user():
         return json_error('Username or email already exists', 400)
 
     user = User(
-        username=data['username'].strip(),
-        email=data['email'].strip().lower(),
+        username=data['username'],
+        email=data['email'],
         password=generate_password_hash(data['password'], method='pbkdf2:sha256', salt_length=16),
         fullname=data.get('fullname', '—') or '—',
         phone=data.get('phone', '—') or '—',
@@ -158,8 +161,20 @@ def login_user():
     if not data.get('username') or not data.get('password'):
         return json_error('Username and password are required', 400)
 
-    user = User.query.filter_by(username=data['username']).first()
-    if not user or not check_password_hash(user.password, data['password']):
+    identifier = data['username'].strip()
+    user = User.query.filter(
+        (User.username == identifier) | (func.lower(User.email) == identifier.lower())
+    ).first()
+    if not user:
+        return json_error('Invalid credentials', 401)
+
+    password_matches = check_password_hash(user.password, data['password'])
+    if not password_matches and user.password == data['password']:
+        user.password = generate_password_hash(data['password'], method='pbkdf2:sha256', salt_length=16)
+        db.session.commit()
+        password_matches = True
+
+    if not password_matches:
         return json_error('Invalid credentials', 401)
 
     session.clear()
@@ -279,20 +294,78 @@ def issue_ticket(current_user):
     return jsonify({'message': 'OK', 'id': ticket.id}), 201
 
 
-@bp.route('/api/save_catch', methods=['POST'])
+
+
+@bp.route('/api/rivers', methods=['GET'])
+def list_rivers():
+    rivers = River.query.filter_by(active=True).order_by(River.region).all()
+    return jsonify([
+        {
+            'id': r.id,
+            'name': r.name,
+            'type': r.type,
+            'region': r.region,
+            'latitude': r.latitude,
+            'longitude': r.longitude,
+            'fish': r.fish,
+            'fish_rules': r.fish_rules,
+            'interesting_facts': r.interesting_facts,
+            'description': r.description
+        }
+        for r in rivers
+    ])
+
+
+@bp.route('/api/river', methods=['POST'])
 @require_login
-def save_catch(current_user):
+def create_river(current_user):
     data, error = parse_json_request()
     if error:
         return error
 
-    if not data.get('fish_type') or not data.get('location'):
-        return json_error('Fish type and location are required', 400)
+    if not data.get('name') or not data.get('type') or not data.get('region'):
+        return json_error('Name, type and region are required', 400)
 
-    catch = Catch(fish_type=data['fish_type'], location=data['location'])
-    db.session.add(catch)
+    try:
+        latitude = float(data.get('latitude', 0))
+        longitude = float(data.get('longitude', 0))
+    except (ValueError, TypeError):
+        return json_error('Invalid latitude or longitude', 400)
+
+    river = River(
+        name=data['name'].strip(),
+        type=data['type'].strip(),
+        region=data['region'].strip(),
+        latitude=latitude,
+        longitude=longitude,
+        fish=data.get('fish', '').strip(),
+        fish_rules=data.get('fish_rules', '').strip(),
+        interesting_facts=data.get('interesting_facts', '').strip(),
+        description=data.get('description', '').strip()
+    )
+    db.session.add(river)
     db.session.commit()
-    return jsonify({'message': 'OK', 'id': catch.id}), 201
+    return jsonify({'message': 'OK', 'id': river.id}), 201
+
+
+@bp.route('/api/river/<int:river_id>', methods=['GET'])
+def get_river(river_id):
+    river = River.query.get(river_id)
+    if not river:
+        return json_error('Not found', 404)
+    return jsonify({
+        'id': river.id,
+        'name': river.name,
+        'type': river.type,
+        'region': river.region,
+        'latitude': river.latitude,
+        'longitude': river.longitude,
+        'fish': river.fish,
+        'fish_rules': river.fish_rules,
+        'interesting_facts': river.interesting_facts,
+        'description': river.description,
+        'active': river.active
+    })
 
 
 @bp.route('/api/vessels', methods=['GET'])

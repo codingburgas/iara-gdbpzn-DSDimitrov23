@@ -30,11 +30,19 @@ class FishingTicket(db.Model):
     price = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Catch(db.Model):
+class River(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    fish_type = db.Column(db.String(50))
-    location = db.Column(db.String(100))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(30), nullable=False)  # 'Река', 'Язовир', 'Езеро'
+    region = db.Column(db.String(50), nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    fish = db.Column(db.String(200))  # JSON format: ["Пъстърва", "Шаран"]
+    fish_rules = db.Column(db.Text)
+    interesting_facts = db.Column(db.Text)
+    description = db.Column(db.Text)
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Permit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
