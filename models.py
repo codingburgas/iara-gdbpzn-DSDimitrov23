@@ -11,7 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     fullname = db.Column(db.String(100), default="—")
     phone = db.Column(db.String(20), default="—")
-    role = db.Column(db.String(50), default="Любител Рибар")
+    role = db.Column(db.String(50), default="Любител рибар")
     vessel = db.Column(db.String(50), default="—")
     permit = db.Column(db.String(50), default="—")
     member_since = db.Column(db.String(30), default=now_date_str)
@@ -33,11 +33,11 @@ class FishingTicket(db.Model):
 class River(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(30), nullable=False)  # 'Река', 'Язовир', 'Езеро'
+    type = db.Column(db.String(30), nullable=False)
     region = db.Column(db.String(50), nullable=False)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    fish = db.Column(db.String(200))  # JSON format: ["Пъстърва", "Шаран"]
+    fish = db.Column(db.String(200))
     fish_rules = db.Column(db.Text)
     interesting_facts = db.Column(db.Text)
     description = db.Column(db.Text)

@@ -7,7 +7,7 @@
     <div class="auth-hero">
         <div class="inner">
             <h1>Станете част от ИАРА</h1>
-            <p class="lead">Създайте профил, за да управлявате вашите разрешителни и присъствате в системата за проверки и издаване на билети за риболов.</p>
+            <p class="lead">Създайте профил, за да управлявате разрешителни, проверки и издаване на риболовни билети.</p>
         </div>
         <div class="hero-decor"></div>
     </div>
@@ -17,21 +17,20 @@
             <div class="logo"><span>⚓</span> ИАРА</div>
             <h2>Регистрация</h2>
             <form onsubmit="handleRegister(event)">
-                <input type="text" id="regUser" placeholder="Потребителско име *" required>
-                <input type="email" id="regEmail" placeholder="Електронна поща *" required>
-                <input type="password" id="regPass" placeholder="Парола *" required>
+                <input type="text" id="regUser" placeholder="Потребителско име *" autocomplete="username" required>
+                <input type="email" id="regEmail" placeholder="Електронна поща *" autocomplete="email" required>
+                <input type="password" id="regPass" placeholder="Парола, минимум 8 символа *" autocomplete="new-password" minlength="8" required>
                 <input type="text" id="regFullName" placeholder="Пълно име">
                 <input type="text" id="regPhone" placeholder="Телефон">
 
                 <select id="regRole" style="margin-top: 12px;">
-                    <option value="">Изберете роля...</option>
-                    <option value="Любител Рибар">Любител Рибар</option>
+                    <option value="Любител рибар">Любител рибар</option>
                     <option value="Инспектор на ИАРА">Инспектор на ИАРА</option>
-                    <option value="Капитан на Кораб">Капитан на Кораб</option>
+                    <option value="Капитан на кораб">Капитан на кораб</option>
                 </select>
 
                 <div class="field-row">
-                    <input type="text" id="regVessel" placeholder="Регистрация на Кораб" style="margin-top: 12px;">
+                    <input type="text" id="regVessel" placeholder="Регистрация на кораб" style="margin-top: 12px;">
                     <input type="text" id="regPermit" placeholder="Разрешително №" style="margin-top: 12px;">
                 </div>
 

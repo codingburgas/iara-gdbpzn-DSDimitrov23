@@ -104,14 +104,19 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
     e.preventDefault();
-    const u = document.getElementById('regUser').value;
-    const em = document.getElementById('regEmail').value;
+    const u = document.getElementById('regUser').value.trim();
+    const em = document.getElementById('regEmail').value.trim();
     const p = document.getElementById('regPass').value;
-    const fn = document.getElementById('regFullName').value;
-    const ph = document.getElementById('regPhone').value;
-    const r = document.getElementById('regRole').value;
-    const v = document.getElementById('regVessel').value;
-    const perm = document.getElementById('regPermit').value;
+    const fn = document.getElementById('regFullName').value.trim();
+    const ph = document.getElementById('regPhone').value.trim();
+    const r = document.getElementById('regRole').value || 'Любител рибар';
+    const v = document.getElementById('regVessel').value.trim();
+    const perm = document.getElementById('regPermit').value.trim();
+
+    if (p.length < 8) {
+        alert('❌ Паролата трябва да бъде поне 8 символа.');
+        return;
+    }
 
     try {
         console.log('Registering', u, em);
@@ -125,9 +130,10 @@ async function handleRegister(e) {
             alert('✅ Регистрацията е успешна!');
             window.location.href = '/login';
         } else {
-            const txt = await res.text().catch(() => '');
-            console.warn('Register failed', res.status, txt);
-            alert('❌ Потребителското име или имейл вече съществуват! Вижте конзолата.');
+            const err = await res.json().catch(() => null);
+            const message = err && err.error ? err.error : 'Регистрацията не беше успешна.';
+            console.warn('Register failed', res.status, message);
+            alert(`❌ ${message}`);
         }
     } catch (err) {
         console.error('Register error', err);
@@ -150,7 +156,7 @@ async function triggerEditProfile() {
     if (newPhone === null) return;
 
     const res = await fetch(`/api/user/${currentUser}/edit`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullname: newName, email: newEmail, phone: newPhone })
     });
@@ -167,6 +173,12 @@ async function triggerChangePassword() {
     const currentUser = localStorage.getItem('user');
     if (!currentUser) return;
 
+    const oldPass = prompt('Въведете текущата парола:');
+    if (!oldPass) {
+        alert('Текущата парола е задължителна!');
+        return;
+    }
+
     const newPass = prompt('Въведете нова парола:');
     if (!newPass) {
         alert('Паролата не може да бъде празна!');
@@ -174,9 +186,9 @@ async function triggerChangePassword() {
     }
 
     const res = await fetch(`/api/user/${currentUser}/password`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: newPass })
+        body: JSON.stringify({ old_password: oldPass, password: newPass })
     });
 
     if (res.ok) {
@@ -259,13 +271,23 @@ async function loadDashboardData() {
     document.getElementById('stat-tickets').innerText = data.total_tickets;
     document.getElementById('stat-revenue').innerText = `${data.total_revenue.toFixed(2)} €`;
 
+    const chart = document.querySelector('.chart-line');
+    if (chart && Array.isArray(data.monthly_overview)) {
+        chart.innerHTML = data.monthly_overview.map(month => `
+            <div class="col" title="${month.label}: ${month.total} операции">
+                <div class="line" style="--value:${month.value}"></div>
+                <span>${month.label}</span>
+            </div>
+        `).join('');
+    }
+
     const operations = document.getElementById('recentOperations');
     if (operations) {
         operations.innerHTML = data.recent_operations.length ? data.recent_operations.map(op => `
             <li>
                 <div class="transaction-info">
                     <strong>${op.title}</strong>
-                    <span>${op.timestamp}</span>
+                    <span>${op.timestamp}${op.subtitle ? ` · ${op.subtitle}` : ''}</span>
                 </div>
                 <div class="amount positive">${op.status}</div>
             </li>

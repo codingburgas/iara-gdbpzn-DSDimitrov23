@@ -204,10 +204,17 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  align-items: center;
   gap: 16px;
+}
+.chart-line .col span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 .line {
   width: 4px;
+  height: calc(var(--value) * 1%);
   margin: auto 0 0;
   background: linear-gradient(180deg, #7abff9, #4f8ef7);
   border-radius: 999px;

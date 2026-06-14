@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template, request, redirect, session
 from models import db, User, Vessel, FishingTicket, River, Permit, Inspection, Fine
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import re
@@ -44,12 +44,12 @@ def authorization_required(target_username, current_user):
 
 def validate_registration(data):
     if not data.get('username') or not isinstance(data.get('username'), str):
-        return 'Username is required'
+        return 'Потребителското име е задължително.'
     if not data.get('email') or not isinstance(data.get('email'), str) or not EMAIL_REGEX.match(data['email']):
-        return 'Valid email is required'
+        return 'Въведете валиден имейл адрес.'
     password = data.get('password')
     if not password or not isinstance(password, str) or len(password) < 8:
-        return 'Password must be at least 8 characters long'
+        return 'Паролата трябва да бъде поне 8 символа.'
     return None
 
 
@@ -109,7 +109,7 @@ def fines_page():
 @bp.route('/api/tickets')
 @require_login
 def get_tickets(current_user):
-    tickets = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(20).all()
+    tickets = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).all()
     return jsonify([
         {
             'id': t.id,
@@ -135,7 +135,7 @@ def register_user():
         return json_error(validation_error, 400)
 
     if User.query.filter((User.username == data['username']) | (User.email == data['email'])).first():
-        return json_error('Username or email already exists', 400)
+        return json_error('Потребителското име или имейл вече съществуват.', 400)
 
     user = User(
         username=data['username'],
@@ -143,7 +143,7 @@ def register_user():
         password=generate_password_hash(data['password'], method='pbkdf2:sha256', salt_length=16),
         fullname=data.get('fullname', '—') or '—',
         phone=data.get('phone', '—') or '—',
-        role=data.get('role', 'Любител Рибар'),
+        role=data.get('role') or 'Любител рибар',
         vessel=data.get('vessel', '—') or '—',
         permit=data.get('permit', '—') or '—'
     )
@@ -545,6 +545,33 @@ def dashboard_stats(current_user):
     total_revenue = db.session.query(func.coalesce(func.sum(FishingTicket.price), 0)).scalar() or 0
     last_ticket = FishingTicket.query.order_by(FishingTicket.timestamp.desc()).first()
 
+    today = datetime.utcnow()
+    month_series = []
+    current_month = datetime(today.year, today.month, 1)
+    for offset in range(5, -1, -1):
+        month_start = current_month
+        for _ in range(offset):
+            month_start = (month_start - timedelta(days=1)).replace(day=1)
+        next_month = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+        tickets_count = FishingTicket.query.filter(
+            FishingTicket.timestamp >= month_start,
+            FishingTicket.timestamp < next_month
+        ).count()
+        inspections_count = Inspection.query.filter(
+            Inspection.timestamp >= month_start,
+            Inspection.timestamp < next_month
+        ).count()
+        month_series.append({
+            'label': month_start.strftime('%m.%Y'),
+            'tickets': tickets_count,
+            'inspections': inspections_count,
+            'total': tickets_count + inspections_count
+        })
+
+    max_month_value = max([item['total'] for item in month_series] + [1])
+    for item in month_series:
+        item['value'] = round((item['total'] / max_month_value) * 100) if item['total'] else 8
+
     operations = []
     for ticket in FishingTicket.query.order_by(FishingTicket.timestamp.desc()).limit(5):
         operations.append({
@@ -571,9 +598,9 @@ def dashboard_stats(current_user):
         'total_fines': total_fines,
         'total_revenue': float(total_revenue),
         'last_ticket': last_ticket.timestamp.strftime('%d.%m.%Y %H:%M') if last_ticket else '—',
+        'monthly_overview': month_series,
         'recent_operations': operations
     })
-
 
 @bp.route('/api/issue_fine', methods=['POST'])
 @require_login
@@ -626,3 +653,24 @@ def pay_fine(fine_id, current_user):
     fine.paid = True
     db.session.commit()
     return jsonify({'message': 'OK'})
+
+
+@bp.route('/api/fine/pay', methods=['POST'])
+@require_login
+def pay_fine_legacy(current_user):
+    data, error = parse_json_request()
+    if error:
+        return error
+
+    fine_id = data.get('id')
+    if fine_id is None:
+        return json_error('Fine id is required', 400)
+
+    fine = Fine.query.get(fine_id)
+    if not fine:
+        return json_error('Not found', 404)
+
+    fine.paid = True
+    db.session.commit()
+    return jsonify({'message': 'OK'})
+

@@ -7,7 +7,7 @@
     <div class="auth-hero">
         <div class="inner">
             <h1>Добре дошли в ИАРА</h1>
-            <p class="lead">Достъп до контролния панел за управление, проверки и издаване на разрешителни. Влезте с вашия профил за да продължите с администрирането на вашите разрешителни.</p>
+            <p class="lead">Достъп до контролния панел за управление, проверки и издаване на разрешителни.</p>
         </div>
         <div class="hero-decor"></div>
     </div>
@@ -16,10 +16,10 @@
             <div class="logo"><span>⚓</span> ИАРА</div>
             <h2>Вход</h2>
             <form onsubmit="handleLogin(event)">
-                <input type="text" id="loginUser" placeholder="Потребителско име" required>
+                <input type="text" id="loginUser" placeholder="Потребителско име или имейл" autocomplete="username" required>
                 <div style="position:relative; margin-top: 12px; margin-bottom: 12px;">
-                    <input type="password" id="loginPass" placeholder="Парола" required style="padding-right: 60px;">
-                    <div style="position:absolute; right:16px; top:50%; transform:translateY(-50%); cursor: pointer;" class="show-pass" onclick="togglePass('loginPass')">Покажи</div>
+                    <input type="password" id="loginPass" placeholder="Парола" autocomplete="current-password" required style="padding-right: 72px;">
+                    <button type="button" class="show-pass" onclick="togglePass('loginPass')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--accent); padding:6px 8px;">Покажи</button>
                 </div>
                 <button type="submit" class="primary">Влез</button>
             </form>
@@ -29,6 +29,11 @@
 </div>
 {% endblock %}
 
+{% block extra_scripts %}
 <script>
-function togglePass(id){const el=document.getElementById(id); if(el.type==='password') el.type='text'; else el.type='password';}
+function togglePass(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
 </script>
+{% endblock %}
