@@ -37,14 +37,34 @@
     }
 };
 
-async function loadUserProfileData(username) {
-    const res = await fetch(`/api/user/${username}`);
+async function getActiveUsername() {
+    const res = await fetch('/api/me');
     if (res.ok) {
         const data = await res.json();
+        if (data && data.username) {
+            localStorage.setItem('user', data.username);
+            if (document.getElementById('userGreeting')) {
+                document.getElementById('userGreeting').innerText = `👤 Инспектор: ${data.username}`;
+            }
+            return data.username;
+        }
+    }
+
+    return localStorage.getItem('user');
+}
+
+async function loadUserProfileData(username) {
+    const activeUsername = username || await getActiveUsername();
+    if (!activeUsername) return;
+
+    const res = await fetch(`/api/user/${encodeURIComponent(activeUsername)}`);
+    if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('user', data.username);
         
         if (document.getElementById('prof-name')) document.getElementById('prof-name').innerText = data.fullname || data.username;
         if (document.getElementById('prof-role')) document.getElementById('prof-role').innerText = data.role || 'Любител';
-        if (document.getElementById('prof-date')) document.getElementById('prof-date').innerText = `Член от: ${data.member_since}`;
+        if (document.getElementById('prof-date')) document.getElementById('prof-date').innerText = data.member_since || '—';
         
         if (document.getElementById('detail-name')) document.getElementById('detail-name').innerText = data.fullname || '—';
         if (document.getElementById('detail-email')) document.getElementById('detail-email').innerText = data.email || '—';
@@ -142,11 +162,14 @@ async function handleRegister(e) {
 }
 
 async function triggerEditProfile() {
-    const currentUser = localStorage.getItem('user');
+    const currentUser = await getActiveUsername();
     if (!currentUser) return;
-    const currentName = document.getElementById('detail-name').innerText;
-    const currentEmail = document.getElementById('detail-email').innerText;
-    const currentPhone = document.getElementById('detail-phone').innerText;
+    const nameEl = document.getElementById('detail-name');
+    const emailEl = document.getElementById('detail-email');
+    const phoneEl = document.getElementById('detail-phone');
+    const currentName = nameEl ? nameEl.innerText : '';
+    const currentEmail = emailEl ? emailEl.innerText : '';
+    const currentPhone = phoneEl ? phoneEl.innerText : '';
 
     const newName = prompt('Въведете ново Пълно Име:', currentName === '—' ? '' : currentName);
     if (newName === null) return;
@@ -155,22 +178,52 @@ async function triggerEditProfile() {
     const newPhone = prompt('Въведете нов Телефон:', currentPhone === '—' ? '' : currentPhone);
     if (newPhone === null) return;
 
-    const res = await fetch(`/api/user/${currentUser}/edit`, {
+    const res = await fetch(`/api/user/${encodeURIComponent(currentUser)}/edit`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullname: newName, email: newEmail, phone: newPhone })
     });
 
     if (res.ok) {
+        const data = await res.json().catch(() => null);
+        const username = data && data.user && data.user.username ? data.user.username : currentUser;
+        localStorage.setItem('user', username);
         alert('✅ Профилът е обновен успешно!');
-        loadUserProfileData(currentUser);
+        loadUserProfileData(username);
     } else {
-        alert('❌ Грешка при обновяване на профила.');
+        const err = await res.json().catch(() => null);
+        alert(`❌ ${err && err.error ? err.error : 'Грешка при обновяване на профила.'}`);
+    }
+}
+
+async function editProfileField(field, label, elementId) {
+    const currentUser = await getActiveUsername();
+    const valueElement = document.getElementById(elementId);
+    if (!currentUser || !valueElement) return;
+
+    const currentValue = valueElement.innerText.replace(/^Член от:\s*/, '');
+    const nextValue = prompt(`Въведете ново ${label}:`, currentValue === '—' ? '' : currentValue);
+    if (nextValue === null) return;
+
+    const res = await fetch(`/api/user/${encodeURIComponent(currentUser)}/edit`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: nextValue })
+    });
+
+    if (res.ok) {
+        const data = await res.json().catch(() => null);
+        const username = data && data.user && data.user.username ? data.user.username : currentUser;
+        localStorage.setItem('user', username);
+        loadUserProfileData(username);
+    } else {
+        const err = await res.json().catch(() => null);
+        alert(`❌ ${err && err.error ? err.error : 'Грешка при редактиране на полето.'}`);
     }
 }
 
 async function triggerChangePassword() {
-    const currentUser = localStorage.getItem('user');
+    const currentUser = await getActiveUsername();
     if (!currentUser) return;
 
     const oldPass = prompt('Въведете текущата парола:');
@@ -185,7 +238,12 @@ async function triggerChangePassword() {
         return;
     }
 
-    const res = await fetch(`/api/user/${currentUser}/password`, {
+    if (newPass.length < 8) {
+        alert('Новата парола трябва да бъде поне 8 символа.');
+        return;
+    }
+
+    const res = await fetch(`/api/user/${encodeURIComponent(currentUser)}/password`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ old_password: oldPass, password: newPass })
@@ -194,7 +252,8 @@ async function triggerChangePassword() {
     if (res.ok) {
         alert('✅ Паролата е сменена успешно!');
     } else {
-        alert('❌ Грешка при смяна на паролата.');
+        const err = await res.json().catch(() => null);
+        alert(`❌ ${err && err.error ? err.error : 'Грешка при смяна на паролата.'}`);
     }
 }
 

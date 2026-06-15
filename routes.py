@@ -224,15 +224,37 @@ def edit_user_profile(username, current_user):
     if error:
         return error
 
-    if data.get('fullname'):
-        user.fullname = data['fullname']
-    if data.get('email') and EMAIL_REGEX.match(data['email']):
-        user.email = data['email'].strip().lower()
-    if data.get('phone'):
-        user.phone = data['phone']
+    if 'username' in data:
+        new_username = data['username'].strip()
+        if not new_username:
+            return json_error('Username is required', 400)
+        existing_user = User.query.filter(User.username == new_username, User.id != user.id).first()
+        if existing_user:
+            return json_error('Username already exists', 409)
+        user.username = new_username
+    if 'fullname' in data:
+        user.fullname = data['fullname'].strip() or '—'
+    if 'email' in data:
+        new_email = data['email'].strip().lower()
+        if not EMAIL_REGEX.match(new_email):
+            return json_error('Invalid email', 400)
+        existing_email = User.query.filter(User.email == new_email, User.id != user.id).first()
+        if existing_email:
+            return json_error('Email already exists', 409)
+        user.email = new_email
+    if 'phone' in data:
+        user.phone = data['phone'].strip() or '—'
+    if 'role' in data:
+        user.role = data['role'].strip() or '—'
+    if 'vessel' in data:
+        user.vessel = data['vessel'].strip() or '—'
+    if 'permit' in data:
+        user.permit = data['permit'].strip() or '—'
+    if 'member_since' in data:
+        user.member_since = data['member_since'].strip() or '—'
 
     db.session.commit()
-    return jsonify({'message': 'OK'})
+    return jsonify({'message': 'OK', 'user': serialize_user(user)})
 
 
 @bp.route('/api/user/<string:username>/password', methods=['PATCH'])

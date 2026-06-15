@@ -10,7 +10,7 @@
             <button class="primary" onclick="showSection('dashboard')">Табло</button>
             <button onclick="showSection('tickets')">Билети</button>
             <button onclick="showSection('inspections')">Инспекции</button>
-            <button onclick="showSection('profile')">Профил</button>
+            <button onclick="window.location.href='/profile'">Профил</button>
         </div>
     </div>
 
@@ -124,39 +124,15 @@
         </div>
     </div>
 
-    <div id="profile-section" style="display: none;">
-        <div class="topbar">
-            <div class="title-group">
-                <p>Профил</p>
-                <h1>Вашата информация</h1>
-            </div>
-        </div>
-        <div class="grid-two">
-            <div class="chart-card">
-                <h3>Лични данни</h3>
-                <div class="card-list">
-                    <div class="item"><span>Име</span><strong id="detail-name">—</strong></div>
-                    <div class="item"><span>Имейл</span><strong id="detail-email">—</strong></div>
-                    <div class="item"><span>Телефон</span><strong id="detail-phone">—</strong></div>
-                    <div class="item"><span>Роля</span><strong id="detail-role">—</strong></div>
-                </div>
-            </div>
-            <div class="transactions-card">
-                <h3>Профилни действия</h3>
-                <button class="primary" onclick="triggerEditProfile()">Редактирай профил</button>
-                <button onclick="triggerChangePassword()">Смени парола</button>
-            </div>
-        </div>
-    </div>
-
 {% endblock %}
 
+{% block extra_scripts %}
 <script>
     function showSection(sectionId) {
         document.getElementById('dashboard-section').style.display = 'none';
         document.getElementById('tickets-section').style.display = 'none';
         document.getElementById('inspections-section').style.display = 'none';
-        document.getElementById('profile-section').style.display = 'none';
         document.getElementById(sectionId + '-section').style.display = 'block';
     }
 </script>
+{% endblock %}
