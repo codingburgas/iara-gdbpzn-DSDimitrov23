@@ -23,7 +23,6 @@
 - Flask-SQLAlchemy
 - Flask-CORS
 - SQLite
-- Jinja2 templates
 - HTML, CSS, JavaScript
 - Leaflet
 
@@ -50,37 +49,7 @@
 └── README.md
 ```
 
-## Инсталация
 
-1. Отвори проекта в терминал:
-
-```powershell
-cd "c:\Users\Dimitar\OneDrive - Министерство на образованието и науката\Desktop\iara-gdbpzn-DSDimitrov23"
-```
-
-2. Създай виртуална среда:
-
-```powershell
-python -m venv venv
-```
-
-3. Активирай я:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-Ако PowerShell блокира активирането, използвай:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\venv\Scripts\Activate.ps1
-```
-
-4. Инсталирай зависимостите:
-
-```powershell
-pip install flask flask-sqlalchemy flask-cors sqlalchemy werkzeug
 ```
 
 ## Стартиране
@@ -97,14 +66,7 @@ http://127.0.0.1:5000
 
 Началната страница пренасочва към `/login`.
 
-## Тестов потребител
 
-При първо стартиране приложението създава начални данни. Ако базата е празна, се създава администратор:
-
-```text
-Потребител: admin
-Парола: Admin123!
-```
 
 ## База данни
 
@@ -123,7 +85,6 @@ python app.py
 
 Приложението автоматично създава таблиците и зарежда начални данни за водоеми, съдове, разрешителни, билети, инспекции и глоби.
 
-## Полезни маршрути
 
 ### Страници
 
